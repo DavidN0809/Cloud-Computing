@@ -51,7 +51,7 @@ func topWords(path string, K int) []WordCount {
 		wordCountSlice = append(wordCountSlice, WordCount{Word: word, Count: count})
 	}
 
-	// Sort the word counts in descending order of count and in alphabetical order for ties.
+	// Given sort function
 	sortWordCounts(wordCountSlice)
 
 	// If there are fewer words than K, adjust K to the number of unique words.
