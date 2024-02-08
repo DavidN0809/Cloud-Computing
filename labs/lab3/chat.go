@@ -1,9 +1,3 @@
-// Demonstration of channels with a chat application
-// Copyright © 2016 Alan A. A. Donovan & Brian W. Kernighan.
-// License: https://creativecommons.org/licenses/by-nc-sa/4.0/
-
-// Chat is a server that lets clients chat with each other.
-
 package main
 
 import (
@@ -13,74 +7,100 @@ import (
 	"net"
 )
 
-type client chan<- string // an outgoing message channel
+// client struct represents a chat client with a channel for sending messages
+// and a name identifier.
+type client struct {
+	channel chan<- string // Channel for outgoing messages
+	name    string        // Name of the client
+}
 
+// Global channels for managing entering and leaving clients, and broadcasting messages.
 var (
-	entering = make(chan client)
-	leaving  = make(chan client)
-	messages = make(chan string) // all incoming client messages
+	entering = make(chan client)    // Channel for clients trying to enter the chat
+	leaving  = make(chan client)    // Channel for clients trying to leave the chat
+	messages = make(chan string)    // Channel for broadcasting messages to all clients
 )
 
 func main() {
+	// Start listening on TCP port 8000 on localhost.
 	listener, err := net.Listen("tcp", "localhost:8000")
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal(err) // Log and exit on error
 	}
 
-	go broadcaster()
+	go broadcaster() // Start the broadcaster in a new goroutine
 	for {
-		conn, err := listener.Accept()
+		conn, err := listener.Accept() // Accept new connections
 		if err != nil {
-			log.Print(err)
+			log.Print(err) // Log errors without stopping the server
 			continue
 		}
-		go handleConn(conn)
+		go handleConn(conn) // Handle new connection in a separate goroutine
 	}
 }
 
+// broadcaster runs in its own goroutine and manages chat state, including
+// broadcasting messages and tracking entering and leaving clients.
 func broadcaster() {
-	clients := make(map[client]bool) // all connected clients
+	clients := make(map[client]bool) // Map to keep track of connected clients
 	for {
 		select {
 		case msg := <-messages:
-			// Broadcast incoming message to all
-			// clients' outgoing message channels.
+			// Broadcast incoming message to all clients' channels.
 			for cli := range clients {
-				cli <- msg
+				cli.channel <- msg
 			}
 
 		case cli := <-entering:
-			clients[cli] = true
+			clients[cli] = true // Mark client as connected
+			// Generate a message with the list of all connected clients
+			var list string
+			for c := range clients {
+				list += c.name + ", "
+			}
+			cli.channel <- "Current clients: " + list // Send the list to the new client
 
 		case cli := <-leaving:
-			delete(clients, cli)
-			close(cli)
+			delete(clients, cli) // Remove client from the map
+			close(cli.channel)   // Close the client's channel
 		}
 	}
 }
 
+// handleConn handles each client connection.
 func handleConn(conn net.Conn) {
-	ch := make(chan string) // outgoing client messages
+	ch := make(chan string) // Create a channel for outgoing messages
 	go clientWriter(conn, ch)
 
 	who := conn.RemoteAddr().String()
+	cli := client{channel: ch, name: who}
+
 	ch <- "You are " + who
 	messages <- who + " has arrived"
-	entering <- ch
+	entering <- cli
 
 	input := bufio.NewScanner(conn)
 	for input.Scan() {
 		messages <- who + ": " + input.Text()
 	}
-	// NOTE: ignoring potential errors from input.Err()
 
-	leaving <- ch
+	if err := input.Err(); err != nil {
+		log.Println("reading standard input:", err)
+	}
+
+	leaving <- cli
 	messages <- who + " has left"
-	conn.Close()
+	if err := conn.Close(); err != nil {
+		log.Println("closing connection:", err)
+	}
 }
 
+// clientWriter sends messages from the channel to the client's connection.
 func clientWriter(conn net.Conn, ch <-chan string) {
 	for msg := range ch {
-		fmt.Fprintln(conn, msg) // NOTE: ignoring network errors
+		if _, err := fmt.Fprintln(conn, msg); err != nil {
+			log.Println("sending message to client:", err)
+			return
+		}
 	}
 }
