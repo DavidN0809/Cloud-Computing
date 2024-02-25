@@ -24,6 +24,20 @@ type server struct {
 // Map representing a database
 var moviedb = map[string][]string{"Pulp fiction": []string{"1994", "Quentin Tarantino", "John Travolta,Samuel Jackson,Uma Thurman,Bruce Willis"}}
 
+// SetMovieInfo adds a new movie to the database.
+func (s *server) SetMovieInfo(ctx context.Context, in *movieapi.MovieData) (*movieapi.Status, error) {
+	title := in.GetTitle()
+	year := strconv.Itoa(int(in.GetYear()))
+	director := in.GetDirector()
+	cast := strings.Join(in.GetCast(), ",")
+	
+	// Store the movie data
+	moviedb[title] = []string{year, director, cast}
+	log.Printf("Inserted movie: %s", title)
+	
+	return &movieapi.Status{Code: "Success"}, nil
+}
+
 // GetMovieInfo implements movieapi.MovieInfoServer
 func (s *server) GetMovieInfo(ctx context.Context, in *movieapi.MovieRequest) (*movieapi.MovieReply, error) {
 	title := in.GetTitle()
