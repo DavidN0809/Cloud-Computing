@@ -19,16 +19,25 @@ func (t Temperature) Fahrenheit() float64 {
 type Conditions struct {
 	Summary     string
 	Temperature Temperature
+	Pressure int
+	Humidity int
+	WindSpeed float64
 }
 
 type OWMResponse struct {
 	Weather []struct {
-		Main string
-	}
+		Main string `json:"main"`
+	} `json:"weather"`
 	Main struct {
-		Temp Temperature
-	}
+		Temp Temperature `json:"temp"`
+		Pressure int `json:"pressure"`
+		Humidity int `json:"humidity"`
+	} `json:"main"`
+	Wind struct {
+		Speed float64 `json:"speed"`
+	} `json:"wind"`
 }
+
 
 type Client struct {
 	APIKey     string
@@ -88,6 +97,9 @@ func ParseResponse(data []byte) (Conditions, error) {
 	conditions := Conditions{
 		Summary:     resp.Weather[0].Main,
 		Temperature: resp.Main.Temp,
+		Pressure:    resp.Main.Pressure,
+		Humidity:    resp.Main.Humidity,
+		WindSpeed:   resp.Wind.Speed,
 	}
 	return conditions, nil
 }
@@ -118,5 +130,8 @@ func RunCLI() {
 		os.Exit(1)
 	}
 	fmt.Printf("%s %.1fº\n", conditions.Summary, conditions.Temperature.Fahrenheit())
+	fmt.Printf("Pressure: %d hPa\n", conditions.Pressure)
+	fmt.Printf("Humidity: %d%%\n", conditions.Humidity)
+	fmt.Printf("Wind: %.1f m/s\n", conditions.WindSpeed)
 
 }
