@@ -46,41 +46,31 @@ type database struct {
 }
 
 func seedData(client *mongo.Client) {
-    collection := client.Database("blog").Collection("posts")
+    collection := client.Database("myDB").Collection("inventory")
 
     // Define initial data
     initialData := []interface{}{
-        Post{
-            ID:        primitive.NewObjectID(),
-            Title:     "Welcome",
-            Body:      "Welcome to the blog!",
-            Tags:      []string{"introduction"},
-            Comments:  0,
-            CreatedAt: time.Now(),
-            UpdatedAt: time.Now(),
-        },
-        Post{
-            ID:        primitive.NewObjectID(),
-            Title:     "MongoDB",
-            Body:      "MongoDB is a NoSQL database",
-            Tags:      []string{"mongodb", "database"},
-            Comments:  0,
-            CreatedAt: time.Now(),
-            UpdatedAt: time.Now(),
-        },
+        bson.D{{"item", "shoes"}, {"price", 50}},
+        bson.D{{"item", "socks"}, {"price", 5}},
     }
 
-    // Upsert each item in the initial data
+    // Check if each item already exists in the database
     for _, data := range initialData {
-        filter := bson.M{"_id": data.(Post).ID}
-        update := bson.M{"$set": data}
-        opts := options.Update().SetUpsert(true)
-
-        _, err := collection.UpdateOne(context.Background(), filter, update, opts)
-        if err != nil {
-            log.Printf("Failed to upsert initial data: %v", err)
+        filter := bson.D{{Key: "item", Value: data.(bson.D).Map()["item"]}}
+        var result bson.M
+        err := collection.FindOne(context.Background(), filter).Decode(&result)
+        if err == mongo.ErrNoDocuments {
+            // Item doesn't exist, insert it
+            _, err := collection.InsertOne(context.Background(), data)
+            if err != nil {
+                log.Printf("Failed to insert initial data: %v", err)
+            } else {
+                log.Printf("Inserted initial data: %v", data)
+            }
+        } else if err != nil {
+            log.Printf("Error checking if item exists: %v", err)
         } else {
-            log.Printf("Upserted initial data: %+v", data)
+            log.Printf("Item already exists: %v", data)
         }
     }
 }
