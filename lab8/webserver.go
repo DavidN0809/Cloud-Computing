@@ -6,29 +6,36 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+const (
+	mongodbEndpoint = "mongodb://mongodb:27017"
+)
+
+type Item struct {
+	ID    primitive.ObjectID `bson:"_id"`
+	Name  string             `bson:"item"`
+	Price float64            `bson:"price"`
+}
+
 func main() {
-	// Set up MongoDB client options
-	clientOptions := options.Client().ApplyURI("mongodb://mongodb:27017")
+	// Create a MongoDB client
+	client, err := mongo.NewClient(options.Client().ApplyURI(mongodbEndpoint))
+	checkError(err)
 
 	// Connect to MongoDB
-	client, err := mongo.Connect(context.TODO(), clientOptions)
-	if err != nil {
-		log.Fatal(err)
-	}
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	err = client.Connect(ctx)
+	checkError(err)
 
-	// Check the connection
-	err = client.Ping(context.TODO(), nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	log.Println("Connected to MongoDB!")
+	// Disconnect after the main function completes
+	defer client.Disconnect(ctx)
 
 	// Call seedData to seed initial data into MongoDB
 	seedData(client)
@@ -53,67 +60,45 @@ type database struct {
 	client *mongo.Client
 }
 
-
-// seedData seeds initial data into the MongoDB database
 func seedData(client *mongo.Client) {
     collection := client.Database("myDB").Collection("inventory")
 
     // Define initial data
     initialData := []interface{}{
-        bson.D{{"item", "shoes"}, {"price", 50}},
-        bson.D{{"item", "socks"}, {"price", 5}},
+        Item{Name: "shoes", Price: 50},
+        Item{Name: "socks", Price: 5},
     }
 
-    // Overwrite each item in the database
+    // Insert each item in the database if it doesn't exist
     for _, data := range initialData {
-        filter := bson.D{{Key: "item", Value: data.(bson.D).Map()["item"]}}
-        opts := options.Replace().SetUpsert(true)
+        filter := bson.M{"item": data.(Item).Name}
+        update := bson.M{
+            "$setOnInsert": bson.M{
+                "_id":   primitive.NewObjectID(),
+                "item":  data.(Item).Name,
+                "price": data.(Item).Price,
+            },
+        }
+        opts := options.FindOneAndUpdate().SetUpsert(true)
 
-        _, err := collection.ReplaceOne(context.Background(), filter, data, opts)
+        var result Item
+        err := collection.FindOneAndUpdate(context.Background(), filter, update, opts).Decode(&result)
         if err != nil {
-            log.Printf("Failed to replace initial data: %v", err)
+            if err == mongo.ErrNoDocuments {
+                log.Printf("Inserted initial data: %v", data)
+            } else {
+                log.Printf("Failed to insert initial data: %v", err)
+            }
         } else {
-            log.Printf("Replaced initial data: %v", data)
+            log.Printf("Initial data already exists: %v", data)
         }
     }
 }
 
-/*
-// seedData seeds initial data into the MongoDB database only if not exist
-func seedData(client *mongo.Client) {
-	collection := client.Database("myDB").Collection("inventory")
-
-	// Define initial data
-	initialData := []interface{}{
-		bson.D{{"item", "shoes"}, {"price", 50}},
-		bson.D{{"item", "socks"}, {"price", 5}},
-	}
-
-	// Check if each item already exists in the database
-	for _, data := range initialData {
-		filter := bson.D{{Key: "item", Value: data.(bson.D).Map()["item"]}}
-		var result bson.M
-		err := collection.FindOne(context.Background(), filter).Decode(&result)
-		if err == mongo.ErrNoDocuments {
-			// Item doesn't exist, insert it
-			_, err := collection.InsertOne(context.Background(), data)
-			if err != nil {
-				log.Printf("Failed to insert initial data: %v", err)
-			} else {
-				log.Printf("Inserted initial data: %v", data)
-			}
-		} else if err != nil {
-			log.Printf("Error checking if item exists: %v", err)
-		} else {
-			log.Printf("Item already exists: %v", data)
-		}
-	}
-}
-*/
 // list handles the "/list" route and lists all items in the inventory
 func (db *database) list(w http.ResponseWriter, req *http.Request) {
 	collection := db.client.Database("myDB").Collection("inventory")
-	cursor, err := collection.Find(context.TODO(), bson.D{})
+	cursor, err := collection.Find(context.TODO(), bson.M{})
 	if err != nil {
 		http.Error(w, "Failed to list items", http.StatusInternalServerError)
 		return
@@ -121,15 +106,12 @@ func (db *database) list(w http.ResponseWriter, req *http.Request) {
 	defer cursor.Close(context.Background())
 
 	for cursor.Next(context.Background()) {
-		var item struct {
-			Item  string  `bson:"item"`
-			Price float64 `bson:"price"`
-		}
+		var item Item
 		if err := cursor.Decode(&item); err != nil {
 			http.Error(w, "Failed to decode item", http.StatusInternalServerError)
 			return
 		}
-		fmt.Fprintf(w, "%s: $%.2f\n", item.Item, item.Price)
+		fmt.Fprintf(w, "%s: $%.2f\n", item.Name, item.Price)
 	}
 }
 
@@ -137,37 +119,35 @@ func (db *database) list(w http.ResponseWriter, req *http.Request) {
 func (db *database) price(w http.ResponseWriter, req *http.Request) {
 	itemQuery := req.URL.Query().Get("item")
 	collection := db.client.Database("myDB").Collection("inventory")
-	filter := bson.D{{Key: "item", Value: itemQuery}}
+	filter := bson.M{"item": itemQuery}
 
-	var result struct {
-		Item  string  `bson:"item"`
-		Price float64 `bson:"price"`
-	}
-
+	var result Item
 	err := collection.FindOne(context.TODO(), filter).Decode(&result)
 	if err != nil {
 		http.Error(w, "Item not found", http.StatusNotFound)
 		return
 	}
 
-	fmt.Fprintf(w, "%s: $%.2f\n", result.Item, result.Price)
+	fmt.Fprintf(w, "%s: $%.2f\n", result.Name, result.Price)
 }
 
 // create handles the "/create" route and creates a new item in the inventory
 func (db *database) create(w http.ResponseWriter, req *http.Request) {
 	item := req.URL.Query().Get("item")
 	priceStr := req.URL.Query().Get("price")
-	price, err := strconv.ParseFloat(priceStr, 32)
+	price, err := strconv.ParseFloat(priceStr, 64)
 	if err != nil {
 		http.Error(w, "Invalid price format", http.StatusBadRequest)
 		return
 	}
 
 	collection := db.client.Database("myDB").Collection("inventory")
-	_, err = collection.InsertOne(context.TODO(), bson.D{
-		{Key: "item", Value: item},
-		{Key: "price", Value: price},
-	})
+	newItem := Item{
+		ID:    primitive.NewObjectID(),
+		Name:  item,
+		Price: price,
+	}
+	_, err = collection.InsertOne(context.TODO(), newItem)
 	if err != nil {
 		http.Error(w, "Failed to create item", http.StatusInternalServerError)
 		return
@@ -180,15 +160,15 @@ func (db *database) create(w http.ResponseWriter, req *http.Request) {
 func (db *database) update(w http.ResponseWriter, req *http.Request) {
 	item := req.URL.Query().Get("item")
 	priceStr := req.URL.Query().Get("price")
-	price, err := strconv.ParseFloat(priceStr, 32)
+	price, err := strconv.ParseFloat(priceStr, 64)
 	if err != nil {
 		http.Error(w, "Invalid price format", http.StatusBadRequest)
 		return
 	}
 
 	collection := db.client.Database("myDB").Collection("inventory")
-	filter := bson.D{{Key: "item", Value: item}}
-	update := bson.D{{Key: "$set", Value: bson.D{{Key: "price", Value: price}}}}
+	filter := bson.M{"item": item}
+	update := bson.M{"$set": bson.M{"price": price}}
 
 	result, err := collection.UpdateOne(context.TODO(), filter, update)
 	if err != nil {
@@ -208,7 +188,7 @@ func (db *database) delete(w http.ResponseWriter, req *http.Request) {
 	item := req.URL.Query().Get("item")
 
 	collection := db.client.Database("myDB").Collection("inventory")
-	filter := bson.D{{Key: "item", Value: item}}
+	filter := bson.M{"item": item}
 
 	result, err := collection.DeleteOne(context.TODO(), filter)
 	if err != nil {
@@ -221,4 +201,10 @@ func (db *database) delete(w http.ResponseWriter, req *http.Request) {
 	}
 
 	fmt.Fprintf(w, "Deleted %s\n", item)
+}
+
+func checkError(err error) {
+	if err != nil {
+		log.Fatal(err)
+	}
 }
