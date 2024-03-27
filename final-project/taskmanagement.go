@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	mongodbEndpoint = "mongodb://mongodb:27017"
+	mongodbEndpoint = "mongodb://mongodb-final:27017"
 	dbName          = "taskmanagement"
 )
 
@@ -46,6 +46,32 @@ func NewUserService(client *mongo.Client) *UserService {
 func (s *UserService) CreateUser(ctx context.Context, user User) error {
 	_, err := s.collection.InsertOne(ctx, user)
 	return err
+}
+
+func (db *database) listUsers(w http.ResponseWriter, req *http.Request) {
+    collection := db.client.Database(dbName).Collection("users")
+    cursor, err := collection.Find(context.TODO(), bson.M{})
+    if err != nil {
+        http.Error(w, "Failed to list users", http.StatusInternalServerError)
+        return
+    }
+    defer cursor.Close(context.Background())
+
+    var users []User
+    if err := cursor.All(context.TODO(), &users); err != nil {
+        http.Error(w, "Failed to decode users", http.StatusInternalServerError)
+        return
+    }
+
+    jsonData, err := json.Marshal(users)
+    if err != nil {
+        http.Error(w, "Failed to encode users as JSON", http.StatusInternalServerError)
+        return
+    }
+
+    w.Header().Set("Content-Type", "application/json")
+    w.WriteHeader(http.StatusOK)
+    w.Write(jsonData)
 }
 
 type TaskService struct {
@@ -200,6 +226,6 @@ func main() {
 		}
 	})
 
-	fmt.Println("Server started on port 8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	fmt.Println("Server started on port 8000")
+	log.Fatal(http.ListenAndServe(":8000", nil))
 }

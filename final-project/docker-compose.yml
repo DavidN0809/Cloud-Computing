@@ -1,9 +1,9 @@
 version: '3.8'
 
 services:
-  mongodb:
+  mongodb-final:
     image: mongo:latest
-    container_name: mongodb
+    container_name: mongodb-final
     networks:
       - mynetwork
     ports:
@@ -11,13 +11,13 @@ services:
     logging:
       driver: "none"
 
-  webserver:
+  taskmanagement:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: webserver
+    container_name: taskmanagement
     depends_on:
-      - mongodb
+      - mongodb-final
     ports:
       - "8000:8000"
     environment:
