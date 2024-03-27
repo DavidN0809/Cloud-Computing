@@ -39,7 +39,9 @@ func main() {
     // User endpoints
     mux.HandleFunc("/users/create", createUser)
     mux.HandleFunc("/users/get", getUser)
-
+    mux.HandleFunc("/users/remove", removeUser)
+    mux.HandleFunc("/users/getid", getUserID)
+    mux.HandleFunc("/users/list", listUsers)
     // Task endpoints
     mux.HandleFunc("/tasks/create", createTask)
     mux.HandleFunc("/tasks/list", listTasks)
@@ -96,6 +98,69 @@ func getUser(w http.ResponseWriter, req *http.Request) {
     }
 
     fmt.Fprintf(w, "User: %s, Email: %s\n", user.Username, user.Email)
+}
+
+
+func removeUser(w http.ResponseWriter, req *http.Request) {
+    userID := req.URL.Query().Get("user_id")
+
+    userObjectID, err := primitive.ObjectIDFromHex(userID)
+    if err != nil {
+        http.Error(w, "Invalid user ID", http.StatusBadRequest)
+        return
+    }
+
+    collection := client.Database("taskmanagement").Collection("users")
+    filter := bson.M{"_id": userObjectID}
+
+    result, err := collection.DeleteOne(context.TODO(), filter)
+    if err != nil {
+        http.Error(w, "Failed to remove user", http.StatusInternalServerError)
+        return
+    }
+    if result.DeletedCount == 0 {
+        http.Error(w, "User not found", http.StatusNotFound)
+        return
+    }
+
+    fmt.Fprintf(w, "Removed user: %s\n", userID)
+}
+
+
+func getUserID(w http.ResponseWriter, req *http.Request) {
+    username := req.URL.Query().Get("username")
+
+    collection := client.Database("taskmanagement").Collection("users")
+    filter := bson.M{"username": username}
+
+    var user User
+    err := collection.FindOne(context.TODO(), filter).Decode(&user)
+    if err != nil {
+        http.Error(w, "User not found", http.StatusNotFound)
+        return
+    }
+
+    fmt.Fprintf(w, "User ID: %s\n", user.ID.Hex())
+}
+
+func listUsers(w http.ResponseWriter, req *http.Request) {
+    collection := client.Database("taskmanagement").Collection("users")
+    cursor, err := collection.Find(context.TODO(), bson.M{})
+    if err != nil {
+        http.Error(w, "Failed to list users", http.StatusInternalServerError)
+        return
+    }
+    defer cursor.Close(context.Background())
+
+    for cursor.Next(context.Background()) {
+        var user User
+        if err := cursor.Decode(&user); err != nil {
+            http.Error(w, "Failed to decode user", http.StatusInternalServerError)
+            return
+        }
+        fmt.Fprintf(w, "User ID: %s, Username: %s, Email: %s\n",
+            user.ID.Hex(), user.Username, user.Email)
+    }
 }
 
 type Task struct {
