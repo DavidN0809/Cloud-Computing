@@ -16,7 +16,7 @@ func main() {
 	// User Service
 	userServiceURL, _ := url.Parse("http://user-service:8001")
 	userServiceProxy := httputil.NewSingleHostReverseProxy(userServiceURL)
-        userServiceProxy.Directory = func(req *http.Request) {
+        userServiceProxy.Director = func(req *http.Request) {
             req.URL.Scheme = userServiceURL.Scheme
             req.URL.Host = userServiceURL.Host
             req.URL.Path = path.Join(userServiceURL.Path, req.URL.Path)
