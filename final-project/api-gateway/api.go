@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+//	"strings"
+        "path"
 )
 
 func main() {
@@ -14,8 +16,24 @@ func main() {
 	// User Service
 	userServiceURL, _ := url.Parse("http://user-service:8001")
 	userServiceProxy := httputil.NewSingleHostReverseProxy(userServiceURL)
-	mux.Handle("/users", http.StripPrefix("/users", userServiceProxy))
-	mux.Handle("/users/", http.StripPrefix("/users/", userServiceProxy))
+        userServiceProxy.Directory = func(req *http.Request) {
+            req.URL.Scheme = userServiceURL.Scheme
+            req.URL.Host = userServiceURL.Host
+            req.URL.Path = path.Join(userServiceURL.Path, req.URL.Path)
+}
+	mux.HandleFunc("/users", func(w http.ResponseWriter, r *http.Request) {
+	    userServiceProxy.ServeHTTP(w,r)
+	})
+
+//        mux.HandleFunc("/users",func(w http.ResponseWriter, r *http.Request){
+//             userServiceProxy.ServeHTTP(w,r)
+//         r.URL.Path = strings.TrimPrefix(r.URL.Path, "/users")
+ //        userServiceProxy.ServeHTTP(w,r)
+//         })
+
+
+//	mux.Handle("/users", http.StripPrefix("/users", userServiceProxy))
+//	mux.Handle("/users/", http.StripPrefix("/users/", userServiceProxy))
 
 	// Task Service
 	taskServiceURL, _ := url.Parse("http://task-service:8002")
