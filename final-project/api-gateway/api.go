@@ -1,191 +1,80 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"log"
 	"net/http"
-	"time"
-
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"net/http/httputil"
+	"net/url"
+	"path"
 )
 
-var client *mongo.Client
-
 func main() {
-	// Create a new MongoDB client
-	var err error
-	client, err = mongo.NewClient(options.Client().ApplyURI("mongodb://user-mongodb:27017"))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Connect to MongoDB
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	err = client.Connect(ctx)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer client.Disconnect(ctx)
-
 	// Create a new HTTP server
 	mux := http.NewServeMux()
 
-	// User endpoints
-	mux.HandleFunc("/", handleUsers)
-	mux.HandleFunc("/", handleUser)
+	// User Service
+	userServiceURL, _ := url.Parse("http://user-service:8001")
+	userServiceProxy := httputil.NewSingleHostReverseProxy(userServiceURL)
+	userServiceProxy.Director = func(req *http.Request) {
+		req.URL.Scheme = userServiceURL.Scheme
+		req.URL.Host = userServiceURL.Host
+		req.URL.Path = path.Join(userServiceURL.Path, req.URL.Path)
+	}
+	mux.HandleFunc("/users/", func(w http.ResponseWriter, r *http.Request) {
+		userServiceProxy.ServeHTTP(w, r)
+	})
+
+	// Task Service
+	taskServiceURL, _ := url.Parse("http://task-service:8002")
+	taskServiceProxy := httputil.NewSingleHostReverseProxy(taskServiceURL)
+	mux.HandleFunc("/tasks/", func(w http.ResponseWriter, r *http.Request) {
+		taskServiceProxy.ServeHTTP(w, r)
+	})
+
+	// Billing Service
+	billingServiceURL, _ := url.Parse("http://billing-service:8003")
+	billingServiceProxy := httputil.NewSingleHostReverseProxy(billingServiceURL)
+	mux.HandleFunc("/billings/", func(w http.ResponseWriter, r *http.Request) {
+		billingServiceProxy.ServeHTTP(w, r)
+	})
+
+	// User Types
+	mux.HandleFunc("/auth/login", handleLogin)
+	mux.HandleFunc("/auth/register", handleRegister)
 
 	// Start the server
-	log.Println("User Service listening on port 8001...")
-	log.Fatal(http.ListenAndServe(":8001", mux))
+	log.Println("API Gateway listening on port 8000...")
+	log.Fatal(http.ListenAndServe(":8000", mux))
 }
 
-type User struct {
-	ID       primitive.ObjectID `bson:"_id" json:"id"`
-	Username string             `bson:"username" json:"username"`
-	Email    string             `bson:"email" json:"email"`
-	Password string             `bson:"password" json:"password"`
-	Role     string             `bson:"role" json:"role"`
+func handleLogin(w http.ResponseWriter, r *http.Request) {
+	// Implement login logic here
+	// Authenticate user credentials and generate a token
+	// Return the token in the response
 }
 
-func handleUsers(w http.ResponseWriter, req *http.Request) {
-	switch req.Method {
-	case http.MethodGet:
-		listUsers(w, req)
-	case http.MethodPost:
-		createUser(w, req)
-	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+func handleRegister(w http.ResponseWriter, r *http.Request) {
+	var user struct {
+		Username string `json:"username"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
+		Role     string `json:"role"`
 	}
-}
-
-func handleUser(w http.ResponseWriter, req *http.Request) {
-	userID := req.URL.Path[len("/"):]
-
-	switch req.Method {
-	case http.MethodGet:
-		getUser(w, req, userID)
-	case http.MethodPut:
-		updateUser(w, req, userID)
-	case http.MethodDelete:
-		removeUser(w, req, userID)
-	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-	}
-}
-
-func createUser(w http.ResponseWriter, req *http.Request) {
-	var user User
-	err := json.NewDecoder(req.Body).Decode(&user)
+	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	collection := client.Database("user").Collection("users")
-	user.ID = primitive.NewObjectID()
-	_, err = collection.InsertOne(context.TODO(), user)
-	if err != nil {
-		http.Error(w, "Failed to create user", http.StatusInternalServerError)
+	// Validate user role
+	if user.Role != "admin" && user.Role != "regular" {
+		http.Error(w, "Invalid user role", http.StatusBadRequest)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(user)
-}
-
-func getUser(w http.ResponseWriter, req *http.Request, userID string) {
-	objectID, err := primitive.ObjectIDFromHex(userID)
-	if err != nil {
-		http.Error(w, "Invalid user ID", http.StatusBadRequest)
-		return
-	}
-
-	collection := client.Database("user").Collection("users")
-	filter := bson.M{"_id": objectID}
-
-	var user User
-	err = collection.FindOne(context.TODO(), filter).Decode(&user)
-	if err != nil {
-		http.Error(w, "User not found", http.StatusNotFound)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(user)
-}
-
-func updateUser(w http.ResponseWriter, req *http.Request, userID string) {
-	objectID, err := primitive.ObjectIDFromHex(userID)
-	if err != nil {
-		http.Error(w, "Invalid user ID", http.StatusBadRequest)
-		return
-	}
-
-	var user User
-	err = json.NewDecoder(req.Body).Decode(&user)
-	if err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-
-	collection := client.Database("user").Collection("users")
-	filter := bson.M{"_id": objectID}
-	update := bson.M{"$set": bson.M{
-		"username": user.Username,
-		"email":    user.Email,
-		"password": user.Password,
-		"role":     user.Role,
-	}}
-
-	_, err = collection.UpdateOne(context.TODO(), filter, update)
-	if err != nil {
-		http.Error(w, "Failed to update user", http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusNoContent)
-}
-
-func removeUser(w http.ResponseWriter, req *http.Request, userID string) {
-	objectID, err := primitive.ObjectIDFromHex(userID)
-	if err != nil {
-		http.Error(w, "Invalid user ID", http.StatusBadRequest)
-		return
-	}
-
-	collection := client.Database("user").Collection("users")
-	filter := bson.M{"_id": objectID}
-
-	_, err = collection.DeleteOne(context.TODO(), filter)
-	if err != nil {
-		http.Error(w, "Failed to remove user", http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusNoContent)
-}
-
-func listUsers(w http.ResponseWriter, req *http.Request) {
-	collection := client.Database("user").Collection("users")
-	cursor, err := collection.Find(context.TODO(), bson.M{})
-	if err != nil {
-		http.Error(w, "Failed to list users", http.StatusInternalServerError)
-		return
-	}
-	defer cursor.Close(context.Background())
-
-	var users []User
-	err = cursor.All(context.Background(), &users)
-	if err != nil {
-		http.Error(w, "Failed to decode users", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(users)
+	// Forward the request to the user service
+	userServiceURL, _ := url.Parse("http://user-service:8001")
+	userServiceProxy := httputil.NewSingleHostReverseProxy(userServiceURL)
+	userServiceProxy.ServeHTTP(w, r)
 }
