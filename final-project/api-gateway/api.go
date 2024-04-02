@@ -49,9 +49,11 @@ func main() {
 }
 
 func handleLogin(w http.ResponseWriter, r *http.Request) {
-	// Implement login logic here
-	// Authenticate user credentials and generate a token
-	// Return the token in the response
+	// Forward the request to the user service
+	userServiceURL, _ := url.Parse("http://user-service:8001")
+	userServiceProxy := httputil.NewSingleHostReverseProxy(userServiceURL)
+	r.URL.Path = "/login"
+	userServiceProxy.ServeHTTP(w, r)
 }
 
 func handleRegister(w http.ResponseWriter, r *http.Request) {
