@@ -47,37 +47,37 @@ services:
     dns:
       - 1.1.1.1
 
-#  task-service:
-#    build:
-#      context: ./task-service
-#      dockerfile: Dockerfile
-#    container_name: task-service
-#    depends_on:
-#      - task-mongodb
-#    ports:
-#      - "8002:8002"
-#    environment:
-#      - MONGO_URI=mongodb://task-mongodb:27017/taskDB
-#    networks:
-#      - mynetwork
-#    dns:
-#      - 1.1.1.1
+  task-service:
+    build:
+      context: ./task-service
+      dockerfile: Dockerfile
+    container_name: task-service
+    depends_on:
+      - task-mongodb
+    ports:
+      - "8002:8002"
+    environment:
+      - MONGO_URI=mongodb://task-mongodb:27017/taskDB
+    networks:
+      - mynetwork
+    dns:
+      - 1.1.1.1
 
-#  billing-service:
-#    build:
-#      context: ./billing-service
-#      dockerfile: Dockerfile
-#    container_name: billing-service
-#    depends_on:
-#      - billing-mongodb
-#    ports:
-#      - "8003:8003"
-#    environment:
-#      - MONGO_URI=mongodb://billing-mongodb:27017/billingDB
-#    networks:
-#      - mynetwork
-#    dns:
-#      - 1.1.1.1
+  billing-service:
+    build:
+      context: ./billing-service
+      dockerfile: Dockerfile
+    container_name: billing-service
+    depends_on:
+      - billing-mongodb
+    ports:
+      - "8003:8003"
+    environment:
+      - MONGO_URI=mongodb://billing-mongodb:27017/billingDB
+    networks:
+      - mynetwork
+    dns:
+      - 1.1.1.1
 
   api-gateway:
     build:
@@ -86,8 +86,8 @@ services:
     container_name: api-gateway
     depends_on:
       - user-service
-#      - task-service
-#      - billing-service
+      - task-service
+      - billing-service
     ports:
       - "8000:8000"
     networks:
