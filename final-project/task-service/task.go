@@ -32,16 +32,78 @@ func main() {
     }
     defer client.Disconnect(ctx)
 
+    // Check if the database and collection exist, create them if they don't
+    err = ensureDatabaseAndCollection(client)
+    if err != nil {
+        log.Fatal(err)
+    }
+
     // Create a new HTTP server
     mux := http.NewServeMux()
 
     // Task endpoints
-    mux.HandleFunc("/", handleTasks)
-    mux.HandleFunc("/", handleTask)
+    mux.HandleFunc("/tasks/list", listTasks)
+    mux.HandleFunc("/tasks/create", createTask)
+    mux.HandleFunc("/tasks/get/", getTask)
+    mux.HandleFunc("/tasks/update/", updateTask)
+    mux.HandleFunc("/tasks/remove/", removeTask)
 
     // Start the server
     log.Println("Task Service listening on port 8002...")
     log.Fatal(http.ListenAndServe(":8002", mux))
+}
+
+func ensureDatabaseAndCollection(client *mongo.Client) error {
+    dbName := "taskmanagement"
+    collectionName := "tasks"
+
+    // Check if the database exists
+    databases, err := client.ListDatabaseNames(context.Background(), bson.M{})
+    if err != nil {
+        return err
+    }
+
+    dbExists := false
+    for _, db := range databases {
+        if db == dbName {
+            dbExists = true
+            break
+        }
+    }
+
+    if !dbExists {
+        // Create the database if it doesn't exist
+        err = client.Database(dbName).CreateCollection(context.Background(), collectionName)
+        if err != nil {
+            return err
+        }
+        log.Printf("Created database '%s' and collection '%s'", dbName, collectionName)
+    } else {
+        // Check if the collection exists
+        collections, err := client.Database(dbName).ListCollectionNames(context.Background(), bson.M{})
+        if err != nil {
+            return err
+        }
+
+        collectionExists := false
+        for _, coll := range collections {
+            if coll == collectionName {
+                collectionExists = true
+                break
+            }
+        }
+
+        if !collectionExists {
+            // Create the collection if it doesn't exist
+            err = client.Database(dbName).CreateCollection(context.Background(), collectionName)
+            if err != nil {
+                return err
+            }
+            log.Printf("Created collection '%s' in database '%s'", collectionName, dbName)
+        }
+    }
+
+    return nil
 }
 
 type Task struct {
@@ -53,33 +115,12 @@ type Task struct {
     Hours       float64            `bson:"hours" json:"hours"`
 }
 
-func handleTasks(w http.ResponseWriter, req *http.Request) {
-    switch req.Method {
-    case http.MethodGet:
-        listTasks(w, req)
-    case http.MethodPost:
-        createTask(w, req)
-    default:
-        http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-    }
-}
-
-func handleTask(w http.ResponseWriter, req *http.Request) {
-    taskID := req.URL.Path[len("/"):]
-
-    switch req.Method {
-    case http.MethodGet:
-        getTask(w, req, taskID)
-    case http.MethodPut:
-        updateTask(w, req, taskID)
-    case http.MethodDelete:
-        removeTask(w, req, taskID)
-    default:
-        http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-    }
-}
-
 func createTask(w http.ResponseWriter, req *http.Request) {
+    if req.Method != http.MethodPost {
+        http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+        return
+    }
+
     var task Task
     err := json.NewDecoder(req.Body).Decode(&task)
     if err != nil {
@@ -99,7 +140,13 @@ func createTask(w http.ResponseWriter, req *http.Request) {
     json.NewEncoder(w).Encode(task)
 }
 
-func getTask(w http.ResponseWriter, req *http.Request, taskID string) {
+func getTask(w http.ResponseWriter, req *http.Request) {
+    if req.Method != http.MethodGet {
+        http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+        return
+    }
+
+    taskID := req.URL.Path[len("/tasks/get/"):]
     objectID, err := primitive.ObjectIDFromHex(taskID)
     if err != nil {
         http.Error(w, "Invalid task ID", http.StatusBadRequest)
@@ -120,7 +167,13 @@ func getTask(w http.ResponseWriter, req *http.Request, taskID string) {
     json.NewEncoder(w).Encode(task)
 }
 
-func updateTask(w http.ResponseWriter, req *http.Request, taskID string) {
+func updateTask(w http.ResponseWriter, req *http.Request) {
+    if req.Method != http.MethodPut {
+        http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+        return
+    }
+
+    taskID := req.URL.Path[len("/tasks/update/"):]
     objectID, err := primitive.ObjectIDFromHex(taskID)
     if err != nil {
         http.Error(w, "Invalid task ID", http.StatusBadRequest)
@@ -153,7 +206,13 @@ func updateTask(w http.ResponseWriter, req *http.Request, taskID string) {
     w.WriteHeader(http.StatusNoContent)
 }
 
-func removeTask(w http.ResponseWriter, req *http.Request, taskID string) {
+func removeTask(w http.ResponseWriter, req *http.Request) {
+    if req.Method != http.MethodDelete {
+        http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+        return
+    }
+
+    taskID := req.URL.Path[len("/tasks/remove/"):]
     objectID, err := primitive.ObjectIDFromHex(taskID)
     if err != nil {
         http.Error(w, "Invalid task ID", http.StatusBadRequest)
@@ -173,6 +232,11 @@ func removeTask(w http.ResponseWriter, req *http.Request, taskID string) {
 }
 
 func listTasks(w http.ResponseWriter, req *http.Request) {
+    if req.Method != http.MethodGet {
+        http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+        return
+    }
+
     collection := client.Database("taskmanagement").Collection("tasks")
     cursor, err := collection.Find(context.TODO(), bson.M{})
     if err != nil {
