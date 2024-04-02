@@ -32,6 +32,12 @@ func main() {
 	}
 	defer client.Disconnect(ctx)
 
+	// Check if the database and collection exist, create them if they don't
+	err = ensureDatabaseAndCollection(client)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	// Create a new HTTP server
 	mux := http.NewServeMux()
 
@@ -45,6 +51,59 @@ func main() {
 	// Start the server
 	log.Println("User Service listening on port 8001...")
 	log.Fatal(http.ListenAndServe(":8001", mux))
+}
+
+func ensureDatabaseAndCollection(client *mongo.Client) error {
+	dbName := "user"
+	collectionName := "users"
+
+	// Check if the database exists
+	databases, err := client.ListDatabaseNames(context.Background(), bson.M{})
+	if err != nil {
+		return err
+	}
+
+	dbExists := false
+	for _, db := range databases {
+		if db == dbName {
+			dbExists = true
+			break
+		}
+	}
+
+	if !dbExists {
+		// Create the database if it doesn't exist
+		err = client.Database(dbName).CreateCollection(context.Background(), collectionName)
+		if err != nil {
+			return err
+		}
+		log.Printf("Created database '%s' and collection '%s'", dbName, collectionName)
+	} else {
+		// Check if the collection exists
+		collections, err := client.Database(dbName).ListCollectionNames(context.Background(), bson.M{})
+		if err != nil {
+			return err
+		}
+
+		collectionExists := false
+		for _, coll := range collections {
+			if coll == collectionName {
+				collectionExists = true
+				break
+			}
+		}
+
+		if !collectionExists {
+			// Create the collection if it doesn't exist
+			err = client.Database(dbName).CreateCollection(context.Background(), collectionName)
+			if err != nil {
+				return err
+			}
+			log.Printf("Created collection '%s' in database '%s'", collectionName, dbName)
+		}
+	}
+
+	return nil
 }
 
 type User struct {
@@ -156,7 +215,7 @@ func removeUser(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	collection := client.Database("user-db").Collection("users")
+	collection := client.Database("user").Collection("users")
 	filter := bson.M{"_id": objectID}
 
 	_, err = collection.DeleteOne(context.TODO(), filter)
@@ -174,7 +233,7 @@ func listUsers(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	collection := client.Database("user-db").Collection("users")
+	collection := client.Database("user").Collection("users")
 	cursor, err := collection.Find(context.TODO(), bson.M{})
 	if err != nil {
 		http.Error(w, "Failed to list users", http.StatusInternalServerError)
