@@ -56,3 +56,10 @@ curl -X DELETE http://localhost:8000/billings/{billing_id}/
 # List all billings
 curl -X GET http://localhost:8000/billings/
 ```
+
+### docker
+
+#### kill all running containers
+```
+ sudo docker stop $(sudo docker ps -aq)
+```
