@@ -32,16 +32,78 @@ func main() {
     }
     defer client.Disconnect(ctx)
 
+    // Check if the database and collection exist, create them if they don't
+    err = ensureDatabaseAndCollection(client)
+    if err != nil {
+        log.Fatal(err)
+    }
+
     // Create a new HTTP server
     mux := http.NewServeMux()
 
     // Billing endpoints
-    mux.HandleFunc("/", handleBillings)
-    mux.HandleFunc("/", handleBilling)
+    mux.HandleFunc("/billings/list", listBillings)
+    mux.HandleFunc("/billings/create", createBilling)
+    mux.HandleFunc("/billings/get/", getBilling)
+    mux.HandleFunc("/billings/update/", updateBilling)
+    mux.HandleFunc("/billings/remove/", removeBilling)
 
     // Start the server
     log.Println("Billing Service listening on port 8003...")
     log.Fatal(http.ListenAndServe(":8003", mux))
+}
+
+func ensureDatabaseAndCollection(client *mongo.Client) error {
+    dbName := "billing"
+    collectionName := "billings"
+
+    // Check if the database exists
+    databases, err := client.ListDatabaseNames(context.Background(), bson.M{})
+    if err != nil {
+        return err
+    }
+
+    dbExists := false
+    for _, db := range databases {
+        if db == dbName {
+            dbExists = true
+            break
+        }
+    }
+
+    if !dbExists {
+        // Create the database if it doesn't exist
+        err = client.Database(dbName).CreateCollection(context.Background(), collectionName)
+        if err != nil {
+            return err
+        }
+        log.Printf("Created database '%s' and collection '%s'", dbName, collectionName)
+    } else {
+        // Check if the collection exists
+        collections, err := client.Database(dbName).ListCollectionNames(context.Background(), bson.M{})
+        if err != nil {
+            return err
+        }
+
+        collectionExists := false
+        for _, coll := range collections {
+            if coll == collectionName {
+                collectionExists = true
+                break
+            }
+        }
+
+        if !collectionExists {
+            // Create the collection if it doesn't exist
+            err = client.Database(dbName).CreateCollection(context.Background(), collectionName)
+            if err != nil {
+                return err
+            }
+            log.Printf("Created collection '%s' in database '%s'", collectionName, dbName)
+        }
+    }
+
+    return nil
 }
 
 type Billing struct {
@@ -52,33 +114,12 @@ type Billing struct {
     Amount float64            `bson:"amount" json:"amount"`
 }
 
-func handleBillings(w http.ResponseWriter, req *http.Request) {
-    switch req.Method {
-    case http.MethodGet:
-        listBillings(w, req)
-    case http.MethodPost:
-        createBilling(w, req)
-    default:
-        http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-    }
-}
-
-func handleBilling(w http.ResponseWriter, req *http.Request) {
-    billingID := req.URL.Path[len("/"):]
-
-    switch req.Method {
-    case http.MethodGet:
-        getBilling(w, req, billingID)
-    case http.MethodPut:
-        updateBilling(w, req, billingID)
-    case http.MethodDelete:
-        removeBilling(w, req, billingID)
-    default:
-        http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-    }
-}
-
 func createBilling(w http.ResponseWriter, req *http.Request) {
+    if req.Method != http.MethodPost {
+        http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+        return
+    }
+
     var billing Billing
     err := json.NewDecoder(req.Body).Decode(&billing)
     if err != nil {
@@ -98,7 +139,13 @@ func createBilling(w http.ResponseWriter, req *http.Request) {
     json.NewEncoder(w).Encode(billing)
 }
 
-func getBilling(w http.ResponseWriter, req *http.Request, billingID string) {
+func getBilling(w http.ResponseWriter, req *http.Request) {
+    if req.Method != http.MethodGet {
+        http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+        return
+    }
+
+    billingID := req.URL.Path[len("/billings/get/"):]
     objectID, err := primitive.ObjectIDFromHex(billingID)
     if err != nil {
         http.Error(w, "Invalid billing ID", http.StatusBadRequest)
@@ -119,7 +166,13 @@ func getBilling(w http.ResponseWriter, req *http.Request, billingID string) {
     json.NewEncoder(w).Encode(billing)
 }
 
-func updateBilling(w http.ResponseWriter, req *http.Request, billingID string) {
+func updateBilling(w http.ResponseWriter, req *http.Request) {
+    if req.Method != http.MethodPut {
+        http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+        return
+    }
+
+    billingID := req.URL.Path[len("/billings/update/"):]
     objectID, err := primitive.ObjectIDFromHex(billingID)
     if err != nil {
         http.Error(w, "Invalid billing ID", http.StatusBadRequest)
@@ -151,7 +204,13 @@ func updateBilling(w http.ResponseWriter, req *http.Request, billingID string) {
     w.WriteHeader(http.StatusNoContent)
 }
 
-func removeBilling(w http.ResponseWriter, req *http.Request, billingID string) {
+func removeBilling(w http.ResponseWriter, req *http.Request) {
+    if req.Method != http.MethodDelete {
+        http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+        return
+    }
+
+    billingID := req.URL.Path[len("/billings/remove/"):]
     objectID, err := primitive.ObjectIDFromHex(billingID)
     if err != nil {
         http.Error(w, "Invalid billing ID", http.StatusBadRequest)
@@ -171,6 +230,11 @@ func removeBilling(w http.ResponseWriter, req *http.Request, billingID string) {
 }
 
 func listBillings(w http.ResponseWriter, req *http.Request) {
+    if req.Method != http.MethodGet {
+        http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+        return
+    }
+
     collection := client.Database("billing").Collection("billings")
     cursor, err := collection.Find(context.TODO(), bson.M{})
     if err != nil {
