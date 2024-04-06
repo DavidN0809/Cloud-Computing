@@ -63,3 +63,7 @@ curl -X GET http://localhost:8003/billings/list
 ```
 docker-compose up -d
 ```
+#### rebuild when changing code
+```
+docker-compose up --build -d
+```
