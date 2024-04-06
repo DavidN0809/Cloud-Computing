@@ -59,3 +59,7 @@ curl -X GET http://localhost:8003/billings/list
 ```
  sudo docker stop $(sudo docker ps -aq)
 ```
+#### how to run docker compose
+```
+docker-compose up -d
+```
