@@ -47,6 +47,7 @@ func main() {
 	mux.HandleFunc("/users/get/", getUser)
 	mux.HandleFunc("/users/update/", updateUser)
 	mux.HandleFunc("/users/remove/", removeUser)
+	mux.HandleFunc("/users/delete-all", deleteAllUsers) 
 
 	// Start the server
 	log.Println("User Service listening on port 8001...")
@@ -250,4 +251,20 @@ func listUsers(w http.ResponseWriter, req *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(users)
+}
+
+func deleteAllUsers(w http.ResponseWriter, req *http.Request) {
+	if req.Method != http.MethodDelete {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	collection := client.Database("user").Collection("users")
+	_, err := collection.DeleteMany(context.TODO(), bson.M{})
+	if err != nil {
+		http.Error(w, "Failed to delete users", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
