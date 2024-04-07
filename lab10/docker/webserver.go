@@ -50,6 +50,8 @@ func main() {
 	mux.HandleFunc("/create", db.create)
 	mux.HandleFunc("/update", db.update)
 	mux.HandleFunc("/delete", db.delete)
+	// Register handler for the root path
+	mux.HandleFunc("/", homePage)
 
 	// Start the server
 	log.Fatal(http.ListenAndServe(":8000", mux))
@@ -58,6 +60,11 @@ func main() {
 // database is a struct that holds a reference to the MongoDB client
 type database struct {
 	client *mongo.Client
+}
+
+// homePage handles requests to the root URL
+func homePage(w http.ResponseWriter, req *http.Request) {
+	fmt.Fprint(w, "Welcome to the inventory management system!")
 }
 
 func seedData(client *mongo.Client) {
