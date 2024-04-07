@@ -64,7 +64,7 @@ type database struct {
 
 // homePage handles requests to the root URL
 func homePage(w http.ResponseWriter, req *http.Request) {
-	fmt.Fprint(w, "Welcome to the inventory management system!")
+	fmt.Fprint(w, "Welcome to the web server!")
 }
 
 func seedData(client *mongo.Client) {
