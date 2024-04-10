@@ -123,12 +123,15 @@ func createUser(w http.ResponseWriter, req *http.Request) {
     }
 
     var user User
-    err := json.NewDecoder(req.Body).Decode(&user)
+    // Log the raw request body
+    body, err := ioutil.ReadAll(req.Body)
     if err != nil {
-        log.Printf("Failed to decode request body: %v", err)
-        http.Error(w, "Invalid request body", http.StatusBadRequest)
+        log.Println("Failed to read request body:", err)
+        http.Error(w, "Failed to read request body", http.StatusInternalServerError)
         return
     }
+    log.Printf("Request body: %s", string(body))
+	
 
     log.Printf("Creating user: %+v", user)
 
