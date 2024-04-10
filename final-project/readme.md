@@ -36,6 +36,9 @@ curl -X DELETE http://localhost:8000/tasks/remove/<task_id>
 
 # List all tasks
 curl -X GET http://localhost:8000/tasks/list
+
+# Delete all tasks
+curl -X DELETE http://localhost:8003/billings/removeAllTasks
 ```
 
 #### billing
@@ -54,6 +57,10 @@ curl -X DELETE http://localhost:8000/billings/remove/<billing_id>
 
 # List all billings
 curl -X GET http://localhost:8000/billings/list
+
+
+# Delete all billings
+curl -X DELETE http://localhost:8003/billings/removeAllBillings
 ```
 
 ### docker
