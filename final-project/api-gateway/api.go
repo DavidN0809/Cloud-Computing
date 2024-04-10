@@ -50,14 +50,6 @@ func main() {
     log.Fatal(http.ListenAndServe(":8000", mux))
 }
 
-func handleLogin(w http.ResponseWriter, r *http.Request) {
-    // Forward the request to the user service
-    userServiceURL, _ := url.Parse("http://user-service:8001")
-    userServiceProxy := httputil.NewSingleHostReverseProxy(userServiceURL)
-    r.URL.Path = "/login"
-    userServiceProxy.ServeHTTP(w, r)
-}
-
 func handleRegister(w http.ResponseWriter, r *http.Request) {
     var user struct {
         Username string `json:"username"`
@@ -97,5 +89,15 @@ func handleRegister(w http.ResponseWriter, r *http.Request) {
     // Forward the request body
     r.Body = io.NopCloser(bytes.NewBuffer(body))
 
+    userServiceProxy.ServeHTTP(w, r)
+}
+
+func handleLogin(w http.ResponseWriter, r *http.Request) {
+    log.Println("Received request to login user")
+
+    // Forward the request to the user service
+    userServiceURL, _ := url.Parse("http://user-service:8001")
+    userServiceProxy := httputil.NewSingleHostReverseProxy(userServiceURL)
+    r.URL.Path = "/users/login"
     userServiceProxy.ServeHTTP(w, r)
 }

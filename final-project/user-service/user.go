@@ -48,6 +48,7 @@ func main() {
 	mux.HandleFunc("/users/update/", updateUser)
 	mux.HandleFunc("/users/remove/", removeUser)
 	mux.HandleFunc("/users/delete-all", deleteAllUsers) 
+        mux.HandleFunc("/users/login", loginUser)
 
 	// Start the server
 	log.Println("User Service listening on port 8001...")
@@ -151,6 +152,46 @@ func createUser(w http.ResponseWriter, req *http.Request) {
     }
 
     log.Printf("User created successfully: %+v", user)
+
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(user)
+}
+
+func loginUser(w http.ResponseWriter, req *http.Request) {
+    log.Println("Received request to login user")
+
+    if req.Method != http.MethodPost {
+        log.Println("Invalid request method for user login")
+        http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+        return
+    }
+
+    var credentials struct {
+        Username string `json:"username"`
+        Password string `json:"password"`
+    }
+
+    err := json.NewDecoder(req.Body).Decode(&credentials)
+    if err != nil {
+        log.Println("Failed to decode request body:", err)
+        http.Error(w, "Invalid request body", http.StatusBadRequest)
+        return
+    }
+
+    log.Printf("Login attempt for username: %s", credentials.Username)
+
+    collection := client.Database("user").Collection("users")
+    filter := bson.M{"username": credentials.Username, "password": credentials.Password}
+
+    var user User
+    err = collection.FindOne(context.TODO(), filter).Decode(&user)
+    if err != nil {
+        log.Println("Invalid username or password")
+        http.Error(w, "Invalid username or password", http.StatusUnauthorized)
+        return
+    }
+
+    log.Printf("User logged in successfully: %+v", user)
 
     w.Header().Set("Content-Type", "application/json")
     json.NewEncoder(w).Encode(user)
