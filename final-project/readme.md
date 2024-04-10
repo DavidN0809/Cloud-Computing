@@ -17,7 +17,7 @@ curl -X DELETE http://localhost:8000/users/remove/<user_id>
 curl -X GET http://localhost:8000/users/list
 
 # Delete all users
-curl -X DELETE http://localhost:8001/users/delete-all
+curl -X DELETE http://localhost:8000/users/delete-all
 
 ```
 #### tasks
@@ -38,7 +38,7 @@ curl -X DELETE http://localhost:8000/tasks/remove/<task_id>
 curl -X GET http://localhost:8000/tasks/list
 
 # Delete all tasks
-curl -X DELETE http://localhost:8002/tasks/removeAllTasks
+curl -X DELETE http://localhost:8000/tasks/removeAllTasks
 ```
 
 #### billing
@@ -60,7 +60,7 @@ curl -X GET http://localhost:8000/billings/list
 
 
 # Delete all billings
-curl -X DELETE http://localhost:8003/billings/removeAllBillings
+curl -X DELETE http://localhost:8000/billings/removeAllBillings
 ```
 
 ### docker
