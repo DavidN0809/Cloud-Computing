@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"time"
-	"ioutil"g
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -157,7 +156,10 @@ func createUser(w http.ResponseWriter, req *http.Request) {
 }
 
 func getUser(w http.ResponseWriter, req *http.Request) {
+	log.Println("Received request to get user")
+
 	if req.Method != http.MethodGet {
+		log.Println("Invalid request method")
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
@@ -165,9 +167,12 @@ func getUser(w http.ResponseWriter, req *http.Request) {
 	userID := req.URL.Path[len("/users/get/"):]
 	objectID, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
+		log.Printf("Invalid user ID: %v", err)
 		http.Error(w, "Invalid user ID", http.StatusBadRequest)
 		return
 	}
+
+	log.Printf("Getting user with ID: %s", userID)
 
 	collection := client.Database("user").Collection("users")
 	filter := bson.M{"_id": objectID}
@@ -175,16 +180,22 @@ func getUser(w http.ResponseWriter, req *http.Request) {
 	var user User
 	err = collection.FindOne(context.TODO(), filter).Decode(&user)
 	if err != nil {
+		log.Printf("User not found: %v", err)
 		http.Error(w, "User not found", http.StatusNotFound)
 		return
 	}
+
+	log.Printf("User found: %+v", user)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(user)
 }
 
 func updateUser(w http.ResponseWriter, req *http.Request) {
+	log.Println("Received request to update user")
+
 	if req.Method != http.MethodPut {
+		log.Println("Invalid request method")
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
@@ -192,13 +203,17 @@ func updateUser(w http.ResponseWriter, req *http.Request) {
 	userID := req.URL.Path[len("/users/update/"):]
 	objectID, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
+		log.Printf("Invalid user ID: %v", err)
 		http.Error(w, "Invalid user ID", http.StatusBadRequest)
 		return
 	}
 
+	log.Printf("Updating user with ID: %s", userID)
+
 	var user User
 	err = json.NewDecoder(req.Body).Decode(&user)
 	if err != nil {
+		log.Printf("Invalid request body: %v", err)
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
@@ -213,15 +228,21 @@ func updateUser(w http.ResponseWriter, req *http.Request) {
 
 	_, err = collection.UpdateOne(context.TODO(), filter, update)
 	if err != nil {
+		log.Printf("Failed to update user: %v", err)
 		http.Error(w, "Failed to update user", http.StatusInternalServerError)
 		return
 	}
+
+	log.Printf("User updated successfully: %+v", user)
 
 	w.WriteHeader(http.StatusNoContent)
 }
 
 func removeUser(w http.ResponseWriter, req *http.Request) {
+	log.Println("Received request to remove user")
+
 	if req.Method != http.MethodDelete {
+		log.Println("Invalid request method")
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
@@ -229,24 +250,33 @@ func removeUser(w http.ResponseWriter, req *http.Request) {
 	userID := req.URL.Path[len("/users/remove/"):]
 	objectID, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
+		log.Printf("Invalid user ID: %v", err)
 		http.Error(w, "Invalid user ID", http.StatusBadRequest)
 		return
 	}
+
+	log.Printf("Removing user with ID: %s", userID)
 
 	collection := client.Database("user").Collection("users")
 	filter := bson.M{"_id": objectID}
 
 	_, err = collection.DeleteOne(context.TODO(), filter)
 	if err != nil {
+		log.Printf("Failed to remove user: %v", err)
 		http.Error(w, "Failed to remove user", http.StatusInternalServerError)
 		return
 	}
+
+	log.Printf("User removed successfully: %s", userID)
 
 	w.WriteHeader(http.StatusNoContent)
 }
 
 func listUsers(w http.ResponseWriter, req *http.Request) {
+	log.Println("Received request to list users")
+
 	if req.Method != http.MethodGet {
+		log.Println("Invalid request method")
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
@@ -254,6 +284,7 @@ func listUsers(w http.ResponseWriter, req *http.Request) {
 	collection := client.Database("user").Collection("users")
 	cursor, err := collection.Find(context.TODO(), bson.M{})
 	if err != nil {
+		log.Printf("Failed to list users: %v", err)
 		http.Error(w, "Failed to list users", http.StatusInternalServerError)
 		return
 	}
@@ -262,16 +293,22 @@ func listUsers(w http.ResponseWriter, req *http.Request) {
 	var users []User
 	err = cursor.All(context.Background(), &users)
 	if err != nil {
+		log.Printf("Failed to decode users: %v", err)
 		http.Error(w, "Failed to decode users", http.StatusInternalServerError)
 		return
 	}
+
+	log.Printf("Users listed successfully: %+v", users)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(users)
 }
 
 func deleteAllUsers(w http.ResponseWriter, req *http.Request) {
+	log.Println("Received request to delete all users")
+
 	if req.Method != http.MethodDelete {
+		log.Println("Invalid request method")
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
@@ -279,9 +316,12 @@ func deleteAllUsers(w http.ResponseWriter, req *http.Request) {
 	collection := client.Database("user").Collection("users")
 	_, err := collection.DeleteMany(context.TODO(), bson.M{})
 	if err != nil {
+		log.Printf("Failed to delete users: %v", err)
 		http.Error(w, "Failed to delete users", http.StatusInternalServerError)
 		return
 	}
+
+	log.Println("All users deleted successfully")
 
 	w.WriteHeader(http.StatusNoContent)
 }
