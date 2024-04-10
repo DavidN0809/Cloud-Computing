@@ -38,7 +38,7 @@ curl -X DELETE http://localhost:8000/tasks/remove/<task_id>
 curl -X GET http://localhost:8000/tasks/list
 
 # Delete all tasks
-curl -X DELETE http://localhost:8003/billings/removeAllTasks
+curl -X DELETE http://localhost:8002/tasks/removeAllTasks
 ```
 
 #### billing
