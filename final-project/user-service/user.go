@@ -115,32 +115,23 @@ type User struct {
 	Password string             `bson:"password" json:"password"`
         Role     string             `bson:"role" json:"role"`
 }
+
 func createUser(w http.ResponseWriter, req *http.Request) {
-    log.Println("Received request to create user")
-
-    if req.Method != http.MethodPost {
-        http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-        return
-    }
-
+  
     var user User
-   // Log the raw request body
-    body, err := io.ReadAll(req.Body)
+    err := json.NewDecoder(req.Body).Decode(&user)
     if err != nil {
-        log.Println("Failed to read request body:", err)
-        http.Error(w, "Failed to read request body", http.StatusInternalServerError)
+        log.Printf("Failed to decode request body: %v", err)
+        http.Error(w, "Invalid request body", http.StatusBadRequest)
         return
     }
-    log.Printf("Request body: %s", string(body))
-
-	
-
-    log.Printf("Creating user: %+v", user)
 
     // Set default role to "regular" if not specified
     if user.Role == "" {
         user.Role = "regular"
     }
+
+    log.Printf("Creating user: %+v", user)
 
     collection := client.Database("user").Collection("users")
     user.ID = primitive.NewObjectID()
@@ -152,7 +143,6 @@ func createUser(w http.ResponseWriter, req *http.Request) {
     }
 
     log.Printf("User created successfully: %+v", user)
-
     w.Header().Set("Content-Type", "application/json")
     json.NewEncoder(w).Encode(user)
 }
