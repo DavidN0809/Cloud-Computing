@@ -47,6 +47,7 @@ func main() {
     mux.HandleFunc("/billings/get/", getBilling)
     mux.HandleFunc("/billings/update/", updateBilling)
     mux.HandleFunc("/billings/remove/", removeBilling)
+    mux.HandleFunc("/billings/removeAllBillings", removeAllBillings)
 
     // Start the server
     log.Println("Billing Service listening on port 8003...")
@@ -253,3 +254,5 @@ func listBillings(w http.ResponseWriter, req *http.Request) {
     w.Header().Set("Content-Type", "application/json")
     json.NewEncoder(w).Encode(billings)
 }
+
+    mux.HandleFunc("/billings/removeAll", removeAllBillings)
