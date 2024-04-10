@@ -2,6 +2,8 @@ package main
 
 import (
     "encoding/json"
+    "bytes"
+    "io"
     "log"
     "net/http"
     "net/http/httputil"
@@ -63,19 +65,26 @@ func handleRegister(w http.ResponseWriter, r *http.Request) {
         Password string `json:"password"`
         Role     string `json:"role"`
     }
-    err := json.NewDecoder(r.Body).Decode(&user)
+
+    // Log the raw request body
+    body, err := io.ReadAll(r.Body)
     if err != nil {
+        log.Println("Failed to read request body:", err)
+        http.Error(w, "Failed to read request body", http.StatusInternalServerError)
+        return
+    }
+    log.Printf("Request body: %s", string(body))
+
+    err = json.Unmarshal(body, &user)
+    if err != nil {
+        log.Println("Failed to parse request body:", err)
         http.Error(w, "Invalid request body", http.StatusBadRequest)
         return
     }
 
-    // Set default role to "regular" if not specified
-    if user.Role == "" {
-        user.Role = "regular"
-    }
-
     // Validate user role
     if user.Role != "admin" && user.Role != "regular" {
+        log.Println("Invalid user role")
         http.Error(w, "Invalid user role", http.StatusBadRequest)
         return
     }
@@ -84,5 +93,9 @@ func handleRegister(w http.ResponseWriter, r *http.Request) {
     userServiceURL, _ := url.Parse("http://user-service:8001")
     userServiceProxy := httputil.NewSingleHostReverseProxy(userServiceURL)
     r.URL.Path = "/users/create"
+
+    // Forward the request body
+    r.Body = io.NopCloser(bytes.NewBuffer(body))
+
     userServiceProxy.ServeHTTP(w, r)
 }
