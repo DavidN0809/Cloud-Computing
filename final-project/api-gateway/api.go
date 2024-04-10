@@ -69,6 +69,11 @@ func handleRegister(w http.ResponseWriter, r *http.Request) {
         return
     }
 
+    // Set default role to "regular" if not specified
+    if user.Role == "" {
+        user.Role = "regular"
+    }
+
     // Validate user role
     if user.Role != "admin" && user.Role != "regular" {
         http.Error(w, "Invalid user role", http.StatusBadRequest)
@@ -78,5 +83,6 @@ func handleRegister(w http.ResponseWriter, r *http.Request) {
     // Forward the request to the user service
     userServiceURL, _ := url.Parse("http://user-service:8001")
     userServiceProxy := httputil.NewSingleHostReverseProxy(userServiceURL)
+    r.URL.Path = "/users/create"
     userServiceProxy.ServeHTTP(w, r)
 }

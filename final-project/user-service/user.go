@@ -112,6 +112,7 @@ type User struct {
 	Username string             `bson:"username" json:"username"`
 	Email    string             `bson:"email" json:"email"`
 	Password string             `bson:"password" json:"password"`
+        Role     string             `bson:"role" json:"role"`
 }
 
 func createUser(w http.ResponseWriter, req *http.Request) {
@@ -120,12 +121,22 @@ func createUser(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	var user User
-	err := json.NewDecoder(req.Body).Decode(&user)
-	if err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
+   	var user User
+    	err := json.NewDecoder(req.Body).Decode(&user)
+    	if err != nil {
+       		 http.Error(w, "Invalid request body", http.StatusBadRequest)
+        	return
+    	}
+
+    	// Set default role to "regular" if not specified
+    	if user.Role == "" {
+        	user.Role = "regular"
+    	}
+    	// Validate user role
+         if user.Role != "admin" && user.Role != "regular" {
+       		 http.Error(w, "Invalid user role", http.StatusBadRequest)
+       		 return
+    	}
 
 	collection := client.Database("user").Collection("users")
 	user.ID = primitive.NewObjectID()
