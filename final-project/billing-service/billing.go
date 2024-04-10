@@ -205,6 +205,7 @@ func updateBilling(w http.ResponseWriter, req *http.Request) {
     w.WriteHeader(http.StatusNoContent)
 }
 
+
 func removeBilling(w http.ResponseWriter, req *http.Request) {
     if req.Method != http.MethodDelete {
         http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -255,4 +256,20 @@ func listBillings(w http.ResponseWriter, req *http.Request) {
     json.NewEncoder(w).Encode(billings)
 }
 
-    mux.HandleFunc("/billings/removeAll", removeAllBillings)
+
+func removeAllBillings(w http.ResponseWriter, req *http.Request) {
+    if req.Method != http.MethodDelete {
+        http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+        return
+    }
+
+    collection := client.Database("billing").Collection("billings")
+
+    _, err := collection.DeleteMany(context.TODO(), bson.M{})
+    if err != nil {
+        http.Error(w, "Failed to remove all billings", http.StatusInternalServerError)
+        return
+    }
+
+    w.WriteHeader(http.StatusNoContent)
+}

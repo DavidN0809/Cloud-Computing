@@ -271,3 +271,4 @@ func removeAllTasks(w http.ResponseWriter, req *http.Request) {
         http.Error(w, "Failed to remove all tasks", http.StatusInternalServerError)
         return
     }
+}
