@@ -114,40 +114,42 @@ type User struct {
 	Password string             `bson:"password" json:"password"`
         Role     string             `bson:"role" json:"role"`
 }
-
 func createUser(w http.ResponseWriter, req *http.Request) {
-	if req.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
+    log.Println("Received request to create user")
 
-   	var user User
-    	err := json.NewDecoder(req.Body).Decode(&user)
-    	if err != nil {
-       		 http.Error(w, "Invalid request body", http.StatusBadRequest)
-        	return
-    	}
+    if req.Method != http.MethodPost {
+        http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+        return
+    }
 
-    	// Set default role to "regular" if not specified
-    	if user.Role == "" {
-        	user.Role = "regular"
-    	}
-    	// Validate user role
-         if user.Role != "admin" && user.Role != "regular" {
-       		 http.Error(w, "Invalid user role", http.StatusBadRequest)
-       		 return
-    	}
+    var user User
+    err := json.NewDecoder(req.Body).Decode(&user)
+    if err != nil {
+        log.Printf("Failed to decode request body: %v", err)
+        http.Error(w, "Invalid request body", http.StatusBadRequest)
+        return
+    }
 
-	collection := client.Database("user").Collection("users")
-	user.ID = primitive.NewObjectID()
-	_, err = collection.InsertOne(context.TODO(), user)
-	if err != nil {
-		http.Error(w, "Failed to create user", http.StatusInternalServerError)
-		return
-	}
+    log.Printf("Creating user: %+v", user)
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(user)
+    // Set default role to "regular" if not specified
+    if user.Role == "" {
+        user.Role = "regular"
+    }
+
+    collection := client.Database("user").Collection("users")
+    user.ID = primitive.NewObjectID()
+    _, err = collection.InsertOne(context.TODO(), user)
+    if err != nil {
+        log.Printf("Failed to create user: %v", err)
+        http.Error(w, "Failed to create user", http.StatusInternalServerError)
+        return
+    }
+
+    log.Printf("User created successfully: %+v", user)
+
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(user)
 }
 
 func getUser(w http.ResponseWriter, req *http.Request) {
