@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 	"time"
-
+	"ioutil"g
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -123,14 +123,15 @@ func createUser(w http.ResponseWriter, req *http.Request) {
     }
 
     var user User
-    // Log the raw request body
-    body, err := ioutil.ReadAll(req.Body)
+   // Log the raw request body
+    body, err := io.ReadAll(req.Body)
     if err != nil {
         log.Println("Failed to read request body:", err)
         http.Error(w, "Failed to read request body", http.StatusInternalServerError)
         return
     }
     log.Printf("Request body: %s", string(body))
+
 	
 
     log.Printf("Creating user: %+v", user)
