@@ -15,8 +15,11 @@ curl -X DELETE http://localhost:8000/users/remove/<user_id>
 
 # List all users
 curl -X GET http://localhost:8000/users/list
-```
 
+# Delete all users
+curl -X DELETE http://localhost:8001/users/delete-all
+
+```
 #### tasks
 ```
 # Create a task
