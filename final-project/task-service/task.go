@@ -47,6 +47,7 @@ func main() {
     mux.HandleFunc("/tasks/get/", getTask)
     mux.HandleFunc("/tasks/update/", updateTask)
     mux.HandleFunc("/tasks/remove/", removeTask)
+    mux.HandleFunc("/tasks/removeAllTasks", removeAllTasks)
 
     // Start the server
     log.Println("Task Service listening on port 8002...")
@@ -255,3 +256,18 @@ func listTasks(w http.ResponseWriter, req *http.Request) {
     w.Header().Set("Content-Type", "application/json")
     json.NewEncoder(w).Encode(tasks)
 }
+
+
+func removeAllTasks(w http.ResponseWriter, req *http.Request) {
+    if req.Method != http.MethodDelete {
+        http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+        return
+    }
+
+    collection := client.Database("taskmanagement").Collection("tasks")
+
+    _, err := collection.DeleteMany(context.TODO(), bson.M{})
+    if err != nil {
+        http.Error(w, "Failed to remove all tasks", http.StatusInternalServerError)
+        return
+    }
