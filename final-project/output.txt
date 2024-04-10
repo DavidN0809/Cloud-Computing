@@ -1,0 +1,55 @@
+Stopping all running containers...
+5d829d1ec9ea
+bb4012274b93
+45475f8d02c9
+99d804866be9
+600cb0abc3b0
+e6fb8dad119f
+f8f35e2d9728
+Starting up services with docker-compose...
+Starting user-mongodb ... 
+Starting billing-mongodb ... 
+Starting task-mongodb    ... 
+Starting user-mongodb    ... done
+Starting user-service    ... 
+Starting task-mongodb    ... done
+Starting task-service    ... 
+Starting billing-mongodb ... done
+Starting billing-service ... 
+Starting user-service    ... done
+Starting task-service    ... done
+Starting billing-service ... done
+Starting api-gateway     ... 
+Starting api-gateway     ... done
+Waiting for services to be fully started...
+----- User Tests -----
+Testing: Creating a new user
+Response: {"id":"6615e81ee4c7e1696a92fc3a","username":"johndoe","email":"johndoe@example.com","password":"password"}
+Testing: Updating the created user
+Response: 
+Failure in Updating the created user
+Executed Command: curl -s -X PUT -H 'Content-Type: application/json' -d '{"username":"johndoe_updated","email":"johndoe_updated@example.com","password":"password_updated"}' http://localhost:8000/users/update/
+----- Task Tests -----
+Testing: Creating a new task
+Response: {"id":"6615e81ed042c566536505ed","title":"Task 1","description":"Task description","assigned_to":"000000000000000000000000","status":"pending","hours":5}
+Testing: Updating the created task
+Response: Invalid task ID
+parse error: Invalid numeric literal at line 1, column 8
+Failure in Updating the created task
+Executed Command: curl -s -X PUT -H 'Content-Type: application/json' -d '{"title":"Task 1 Updated","description":"Updated task description","assigned_to":"","status":"in progress","hours":8}' http://localhost:8000/tasks/update/
+----- Billing Tests -----
+Testing: Creating a new billing
+Response: {"id":"6615e81e9b9efabe747266bd","user_id":"000000000000000000000000","task_id":"000000000000000000000000","hours":5,"amount":100}
+Testing: Updating the created billing
+Response: Invalid billing ID
+parse error: Invalid numeric literal at line 1, column 8
+Failure in Updating the created billing
+Executed Command: curl -s -X PUT -H 'Content-Type: application/json' -d '{"user_id":"","task_id":"","hours":8,"amount":150}' http://localhost:8000/billings/update/
+----- Final Report -----
+User operations had failures.
+Task operations had failures.
+Billing operations had failures.
+Cleaning up...
+Invalid task ID
+Invalid billing ID
+Script execution completed.
