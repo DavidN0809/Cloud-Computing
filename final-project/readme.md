@@ -1,4 +1,28 @@
 ### curl commands for testing
+
+#### login and register curl
+```
+curl -X POST \
+  http://localhost:8000/auth/register \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "username": "example_user",
+    "email": "example@example.com",
+    "password": "example_password",
+    "role": "regular"
+}'
+
+curl -X POST \
+  http://localhost:8000/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "username": "example_user",
+    "password": "example_password"
+}'
+
+```
+
+### CRUD testing
 #### user
 ```
 # Create a user
