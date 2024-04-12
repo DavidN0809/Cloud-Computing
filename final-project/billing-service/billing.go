@@ -42,12 +42,12 @@ func main() {
     mux := http.NewServeMux()
 
     // Billing endpoints
-    mux.HandleFunc("/billings/list", listBillings)
-    mux.HandleFunc("/billings/create", createBilling)
-    mux.HandleFunc("/billings/get/", getBilling)
-    mux.HandleFunc("/billings/update/", updateBilling)
-    mux.HandleFunc("/billings/remove/", removeBilling)
-    mux.HandleFunc("/billings/removeAllBillings", removeAllBillings)
+    mux.HandleFunc("/billings/list", adminMiddleware(listBillings))
+    mux.HandleFunc("/billings/create", adminMiddleware(createBilling))
+    mux.HandleFunc("/billings/get/", adminMiddleware(getBilling))
+    mux.HandleFunc("/billings/update/", adminMiddleware(updateBilling))
+    mux.HandleFunc("/billings/remove/", adminMiddleware(removeBilling))
+    mux.HandleFunc("/billings/removeAllBillings", adminMiddleware(removeAllBillings))
 
     // Start the server
     log.Println("Billing Service listening on port 8003...")
@@ -106,6 +106,50 @@ func ensureDatabaseAndCollection(client *mongo.Client) error {
 
     return nil
 }
+
+func isAdmin(req *http.Request) bool {
+    // Get the user ID from the request headers or query parameters
+    userID := req.Header.Get("User-ID")
+    if userID == "" {
+        userID = req.URL.Query().Get("user_id")
+    }
+
+    // Call the user service to check if the user is an admin
+    userServiceURL := "http://user-service:8001/users/get/" + userID
+    resp, err := http.Get(userServiceURL)
+    if err != nil {
+        log.Printf("Failed to get user: %v", err)
+        return false
+    }
+    defer resp.Body.Close()
+
+    if resp.StatusCode != http.StatusOK {
+        log.Printf("User not found or unauthorized")
+        return false
+    }
+
+    var user struct {
+        Role string `json:"role"`
+    }
+    err = json.NewDecoder(resp.Body).Decode(&user)
+    if err != nil {
+        log.Printf("Failed to decode user response: %v", err)
+        return false
+    }
+
+    return user.Role == "admin"
+}
+
+func adminMiddleware(next http.HandlerFunc) http.HandlerFunc {
+    return func(w http.ResponseWriter, req *http.Request) {
+        if !isAdmin(req) {
+            http.Error(w, "Unauthorized", http.StatusUnauthorized)
+            return
+        }
+        next(w, req)
+    }
+}
+
 
 type Billing struct {
     ID     primitive.ObjectID `bson:"_id" json:"id"`
