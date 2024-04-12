@@ -1,103 +1,172 @@
-### curl commands for testing
+# API Testing Guide
 
-#### login and register curl
+This document outlines the steps to test the user management system's functionalities, including registration, login, CRUD operations for users and tasks, and billing management.
+
+## Setup
+Install docker
+``` sudo curl -fsSL https://get.docker.com -o get-docker.sh ```
+``` sudo sh get-docker.sh ```
+
+Before you begin testing, ensure your local server is running:
+```docker compose up -d```
+To rebuild after making changes to the code, use:
+```docker compose up --build -d```
+
+
+## User Registration and Login
+### Register a Regular User
 ```
-curl -X POST \
-  http://localhost:8000/auth/register \
+curl -X POST http://localhost:8000/auth/register \
   -H 'Content-Type: application/json' \
   -d '{
-    "username": "example_user",
-    "email": "example@example.com",
-    "password": "example_password",
-    "role": "regular"
-}'
-
-curl -X POST \
-  http://localhost:8000/auth/login \
+        "username": "regular_user",
+        "email": "regular@example.com",
+        "password": "regular_pass",
+        "role": "regular"
+      }'
+```
+### Login as Regular User
+```curl -X POST http://localhost:8000/auth/login \
   -H 'Content-Type: application/json' \
   -d '{
-    "username": "example_user",
-    "password": "example_password"
-}'
-
+        "username": "regular_user",
+        "password": "regular_pass"
+      }'
 ```
 
-### CRUD testing
-#### user
+### Register a Admin User
 ```
-# Create a user
-curl -X POST -H "Content-Type: application/json" -d '{"username":"johndoe","email":"johndoe@example.com","password":"password"}' http://localhost:8000/users/create
-
-# Get a user
-curl -X GET http://localhost:8000/users/get/<user_id>
-
-# Update a user
-curl -X PUT -H "Content-Type: application/json" -d '{"username":"johndoe_updated","email":"johndoe_updated@example.com","password":"password_updated"}' http://localhost:8000/users/update/<user_id>
-
-# Remove a user
-curl -X DELETE http://localhost:8000/users/remove/<user_id>
-
-# List all users
-curl -X GET http://localhost:8000/users/list
-
-# Delete all users
-curl -X DELETE http://localhost:8000/users/delete-all
+curl -X POST http://localhost:8000/auth/register \
+  -H 'Content-Type: application/json' \
+  -d '{
+        "username": "admin_user",
+        "email": "admin@example.com",
+        "password": "admin_pass",
+        "role": "admin"
+      }'
 
 ```
-#### tasks
+### Login as Admin User
 ```
-# Create a task
-curl -X POST -H "Content-Type: application/json" -d '{"title":"Task 1","description":"Task description","assigned_to":"<user_id>","status":"pending","hours":5}' http://localhost:8000/tasks/create
+curl -X POST http://localhost:8000/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{
+        "username": "admin_user",
+        "password": "admin_pass"
+      }'
+```
 
-# Get a task
+Note: Be sure to update the placeholder `<admin_token>` with the actual admin JWT token obtained after logging in as an admin. Similarly, replace `<user_id>`, `<task_id>`, and `<billing_id>` with actual IDs as you proceed with the tests. The commands assuming the API is listening on `localhost` and port `8000`. Adjust the port if your services are running on different ports.
+
+## CRUD Operations for Tasks
+
+### Create a Task (Admin only)
+This operation should only succeed with admin privileges.
+```bash
+curl -X POST http://localhost:8000/tasks/create \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <admin_token>" \
+  -d '{
+        "title": "New Task",
+        "description": "Task description",
+        "assigned_to": "<user_id>",
+        "status": "pending",
+        "hours": 5
+      }'
+```
+
+### Get a Task
+```bash
 curl -X GET http://localhost:8000/tasks/get/<task_id>
+```
 
-# Update a task
-curl -X PUT -H "Content-Type: application/json" -d '{"title":"Task 1 Updated","description":"Updated task description","assigned_to":"<user_id>","status":"in progress","hours":8}' http://localhost:8000/tasks/update/<task_id>
+### Update a Task (Admin only)
+This operation should only succeed with admin privileges.
+```bash
+curl -X PUT http://localhost:8000/tasks/update/<task_id> \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <admin_token>" \
+  -d '{
+        "title": "Task 1 Updated",
+        "description": "Updated task description",
+        "assigned_to": "<user_id>",
+        "status": "in progress",
+        "hours": 8
+      }'
+```
 
-# Remove a task
-curl -X DELETE http://localhost:8000/tasks/remove/<task_id>
+### Remove a Task (Admin only)
+This operation should only succeed with admin privileges.
+```bash
+curl -X DELETE http://localhost:8000/tasks/remove/<task_id> \
+  -H "Authorization: Bearer <admin_token>"
+```
 
-# List all tasks
+### List All Tasks
+```bash
 curl -X GET http://localhost:8000/tasks/list
-
-# Delete all tasks
-curl -X DELETE http://localhost:8000/tasks/removeAllTasks
 ```
 
-#### billing
+### Delete All Tasks (Admin only)
+This operation should only succeed with admin privileges.
+```bash
+curl -X DELETE http://localhost:8000/tasks/removeAllTasks \
+  -H "Authorization: Bearer <admin_token>"
 ```
-# Create a billing
-curl -X POST -H "Content-Type: application/json" -d '{"user_id":"<user_id>","task_id":"<task_id>","hours":5,"amount":100}' http://localhost:8000/billings/create
 
-# Get a billing
+## CRUD Operations for Billing
+
+### Create a Billing (Admin only)
+This operation should only succeed with admin privileges.
+```bash
+curl -X POST http://localhost:8000/billings/create \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <admin_token>" \
+  -d '{
+        "user_id": "<user_id>",
+        "task_id": "<task_id>",
+        "hours": 5,
+        "amount": 100
+      }'
+```
+
+### Get a Billing
+```bash
 curl -X GET http://localhost:8000/billings/get/<billing_id>
-
-# Update a billing
-curl -X PUT -H "Content-Type: application/json" -d '{"user_id":"<user_id>","task_id":"<task_id>","hours":8,"amount":150}' http://localhost:8000/billings/update/<billing_id>
-
-# Remove a billing
-curl -X DELETE http://localhost:8000/billings/remove/<billing_id>
-
-# List all billings
-curl -X GET http://localhost:8000/billings/list
-
-
-# Delete all billings
-curl -X DELETE http://localhost:8000/billings/removeAllBillings
 ```
 
-### docker
+### Update a Billing (Admin only)
+This operation should only succeed with admin privileges.
+```bash
+curl -X PUT http://localhost:8000/billings/update/<billing_id> \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <admin_token>" \
+  -d '{
+        "user_id": "<user_id>",
+        "task_id": "<task_id>",
+        "hours": 8,
+        "amount": 150
+      }'
+```
 
-#### kill all running containers
+### Remove a Billing (Admin only)
+This operation should only succeed with admin privileges.
+```bash
+curl -X DELETE http://localhost:8000/billings/remove/<billing_id> \
+  -H "Authorization: Bearer <admin_token>"
 ```
- sudo docker stop $(sudo docker ps -aq)
+
+### List All Billings (Admin only)
+This operation should only succeed with admin privileges.
+```bash
+curl -X GET http://localhost:8000/billings/list \
+  -H "Authorization: Bearer <admin_token>"
 ```
-#### how to run docker compose
+
+### Delete All Billings (Admin only)
+This operation should only succeed with admin privileges.
+```bash
+curl -X DELETE http://localhost:8000/billings/removeAllBillings \
+  -H "Authorization: Bearer <admin_token>"
 ```
-docker-compose up -d
-```
-#### rebuild when changing code
-```
-docker-compose up --build -d
-```
+
