@@ -41,9 +41,9 @@ func main() {
 	mux := http.NewServeMux()
 
 	// User endpoints
-	mux.HandleFunc("/users/list", adminMiddleware(listUsers))
+	mux.HandleFunc("/users/list", listUsers)
 	mux.HandleFunc("/users/create", createUser)
-	mux.HandleFunc("/users/get/", adminMiddleware(getUser))
+	mux.HandleFunc("/users/get/",getUser)
 	mux.HandleFunc("/users/update/", adminMiddleware(updateUser))
 	mux.HandleFunc("/users/remove/", adminMiddleware(removeUser))
 	mux.HandleFunc("/users/delete-all",adminMiddleware(deleteAllUsers))
@@ -162,6 +162,13 @@ type User struct {
 func createUser(w http.ResponseWriter, req *http.Request) {
   
     var user User
+    err := json.NewDecoder(req.Body).Decode(&user)
+    if err != nil {
+        log.Printf("Invalid request body: %v", err)
+        http.Error(w, "Invalid request body", http.StatusBadRequest)
+        return
+    }
+
     // Set default role to "regular" if not specified
     if user.Role == "" {
         user.Role = "regular"
