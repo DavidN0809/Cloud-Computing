@@ -34,7 +34,8 @@ curl -X POST http://localhost:8000/auth/register \
       }'
 ```
 ### Login as Regular User
-```curl -X POST http://localhost:8000/auth/login \
+```
+curl -X POST http://localhost:8000/auth/login \
   -H 'Content-Type: application/json' \
   -d '{
         "username": "regular_user",
