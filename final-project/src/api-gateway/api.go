@@ -8,7 +8,6 @@ import (
     "net/http"
     "net/http/httputil"
     "net/url"
-    "path"
 )
 
 func main() {
@@ -18,27 +17,18 @@ func main() {
     // User Service
     userServiceURL, _ := url.Parse("http://user-service:8001")
     userServiceProxy := httputil.NewSingleHostReverseProxy(userServiceURL)
-    userServiceProxy.Director = func(req *http.Request) {
-        req.URL.Scheme = userServiceURL.Scheme
-        req.URL.Host = userServiceURL.Host
-        req.URL.Path = path.Join(userServiceURL.Path, req.URL.Path)
-    }
     mux.HandleFunc("/users/", func(w http.ResponseWriter, r *http.Request) {
         userServiceProxy.ServeHTTP(w, r)
     })
 
     // Task Service
-    taskServiceURL, _ := url.Parse("http://task-service:8002")
-    taskServiceProxy := httputil.NewSingleHostReverseProxy(taskServiceURL)
     mux.HandleFunc("/tasks/", func(w http.ResponseWriter, r *http.Request) {
-        taskServiceProxy.ServeHTTP(w, r)
+        forwardRequest(w, r, "http://task-service:8002")
     })
 
     // Billing Service
-    billingServiceURL, _ := url.Parse("http://billing-service:8003")
-    billingServiceProxy := httputil.NewSingleHostReverseProxy(billingServiceURL)
     mux.HandleFunc("/billings/", func(w http.ResponseWriter, r *http.Request) {
-        billingServiceProxy.ServeHTTP(w, r)
+        forwardRequest(w, r, "http://billing-service:8003")
     })
 
     // User Types
@@ -92,6 +82,7 @@ func handleRegister(w http.ResponseWriter, r *http.Request) {
     userServiceProxy.ServeHTTP(w, r)
 }
 
+
 func handleLogin(w http.ResponseWriter, r *http.Request) {
     log.Println("Received request to login user")
 
@@ -100,4 +91,17 @@ func handleLogin(w http.ResponseWriter, r *http.Request) {
     userServiceProxy := httputil.NewSingleHostReverseProxy(userServiceURL)
     r.URL.Path = "/users/login"
     userServiceProxy.ServeHTTP(w, r)
+}
+
+
+func forwardRequest(w http.ResponseWriter, r *http.Request, serviceURL string) {
+    // Forward the JWT token to the downstream service
+    token := r.Header.Get("Authorization")
+    if token != "" {
+        r.Header.Set("Authorization", token)
+    }
+
+    url, _ := url.Parse(serviceURL)
+    proxy := httputil.NewSingleHostReverseProxy(url)
+    proxy.ServeHTTP(w, r)
 }

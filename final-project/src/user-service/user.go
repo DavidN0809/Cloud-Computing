@@ -10,6 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+        "github.com/dgrijalva/jwt-go"
 )
 
 var client *mongo.Client
@@ -45,7 +46,7 @@ func main() {
 	mux.HandleFunc("/users/create", createUser)
 	mux.HandleFunc("/users/get/",getUser)
 	mux.HandleFunc("/users/update/", updateUser)
-	mux.HandleFunc("/users/remove/", removeUser)
+        mux.HandleFunc("/users/remove/", authMiddleware(adminMiddleware(removeUser)))
 	mux.HandleFunc("/users/delete-all",deleteAllUsers)
         mux.HandleFunc("/users/login", loginUser)
 
@@ -106,50 +107,6 @@ func ensureDatabaseAndCollection(client *mongo.Client) error {
 
 	return nil
 }
-
-func adminMiddleware(next http.HandlerFunc) http.HandlerFunc {
-    return func(w http.ResponseWriter, req *http.Request) {
-        if !isAdmin(req) {
-            http.Error(w, "Unauthorized", http.StatusUnauthorized)
-            return
-        }
-        next(w, req)
-    }
-}
-
-func isAdmin(req *http.Request) bool {
-    // Get the user ID from the request headers or query parameters
-    userID := req.Header.Get("User-ID")
-    if userID == "" {
-        userID = req.URL.Query().Get("user_id")
-    }
-
-    // Call the user service to check if the user is an admin
-    userServiceURL := "http://user-service:8001/users/get/" + userID
-    resp, err := http.Get(userServiceURL)
-    if err != nil {
-        log.Printf("Failed to get user: %v", err)
-        return false
-    }
-    defer resp.Body.Close()
-
-    if resp.StatusCode != http.StatusOK {
-        log.Printf("User not found or unauthorized")
-        return false
-    }
-
-    var user struct {
-        Role string `json:"role"`
-    }
-    err = json.NewDecoder(resp.Body).Decode(&user)
-    if err != nil {
-        log.Printf("Failed to decode user response: %v", err)
-        return false
-    }
-
-    return user.Role == "admin"
-}
-
 
 type User struct {
 	ID       primitive.ObjectID `bson:"_id" json:"id"`
@@ -226,6 +183,30 @@ func loginUser(w http.ResponseWriter, req *http.Request) {
     }
 
     log.Printf("User logged in successfully: %+v", user)
+
+
+    // Generate JWT token
+    token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+        "userID": user.ID.Hex(),
+        "role":   user.Role,
+        "exp":    time.Now().Add(time.Hour * 24).Unix(), // Token expires in 24 hours
+    })
+
+    // Sign the token with a secret key
+    secretKey := []byte("your-secret-key")
+    tokenString, err := token.SignedString(secretKey)
+    if err != nil {
+        log.Println("Failed to generate JWT token:", err)
+        http.Error(w, "Failed to generate token", http.StatusInternalServerError)
+        return
+    }
+
+    // Send the token in the response
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(map[string]string{
+        "token": tokenString,
+    })
+
     w.Header().Set("Content-Type", "application/json")
     w.WriteHeader(http.StatusOK) // Explicitly set the 200 OK status
     json.NewEncoder(w).Encode(user)
