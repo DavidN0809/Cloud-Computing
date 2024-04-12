@@ -75,7 +75,8 @@ curl -X POST http://localhost:8000/users/create \
   -H "Authorization: Bearer <admin_token>" \
   -d '{"username":"newuser","email":"newuser@example.com","password":"newuserpass"}'
 ```
-### Get a User
+### Get a User (Admin only)
+This operation should only succeed with admin privileges.
 ```bash
 curl -X GET http://localhost:8000/users/get/<user_id>
 ```
