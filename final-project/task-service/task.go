@@ -46,8 +46,8 @@ func main() {
     mux.HandleFunc("/tasks/create", createTask)
     mux.HandleFunc("/tasks/get/", getTask)
     mux.HandleFunc("/tasks/update/", updateTask)
-    mux.HandleFunc("/tasks/remove/", removeTask)
-    mux.HandleFunc("/tasks/removeAllTasks", removeAllTasks)
+    mux.HandleFunc("/tasks/remove/", adminMiddleware(removeTask))
+    mux.HandleFunc("/tasks/removeAllTasks", adminMiddleware(removeAllTasks))
 
     // Start the server
     log.Println("Task Service listening on port 8002...")
@@ -106,6 +106,50 @@ func ensureDatabaseAndCollection(client *mongo.Client) error {
 
     return nil
 }
+
+func adminMiddleware(next http.HandlerFunc) http.HandlerFunc {
+    return func(w http.ResponseWriter, req *http.Request) {
+        if !isAdmin(req) {
+            http.Error(w, "Unauthorized", http.StatusUnauthorized)
+            return
+        }
+        next(w, req)
+    }
+}
+
+func isAdmin(req *http.Request) bool {
+    // Get the user ID from the request headers or query parameters
+    userID := req.Header.Get("User-ID")
+    if userID == "" {
+        userID = req.URL.Query().Get("user_id")
+    }
+
+    // Call the user service to check if the user is an admin
+    userServiceURL := "http://user-service:8001/users/get/" + userID
+    resp, err := http.Get(userServiceURL)
+    if err != nil {
+        log.Printf("Failed to get user: %v", err)
+        return false
+    }
+    defer resp.Body.Close()
+
+    if resp.StatusCode != http.StatusOK {
+        log.Printf("User not found or unauthorized")
+        return false
+    }
+
+    var user struct {
+        Role string `json:"role"`
+    }
+    err = json.NewDecoder(resp.Body).Decode(&user)
+    if err != nil {
+        log.Printf("Failed to decode user response: %v", err)
+        return false
+    }
+
+    return user.Role == "admin"
+}
+
 
 type Task struct {
     ID          primitive.ObjectID `bson:"_id" json:"id"`
