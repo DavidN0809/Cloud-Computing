@@ -99,8 +99,7 @@ curl -X DELETE http://localhost:8000/users/remove/<user_id> \
 ### List All Users (Admin only)
 This operation should only succeed with admin privileges.
 ```bash
-curl -X GET http://localhost:8000/users/list \
-  -H "Authorization: Bearer <admin_token>"
+curl -X GET http://localhost:8000/users/list 
 ```
 
 ### Delete All Users (Admin only)
