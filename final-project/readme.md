@@ -219,6 +219,7 @@ curl -X GET http://localhost:8000/billings/list \
 ### Delete All Billings (Admin only)
 This operation should only succeed with admin privileges.
 ```bash
-curl -X DELETE http://localhost:8000/billings/removeAllBillings 
+curl -X DELETE http://localhost:8000/billings/removeAllBillings \
+      -H 'Authorization: Bearer <admin_token>' 
 ```
 
