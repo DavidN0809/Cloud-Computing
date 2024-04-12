@@ -47,7 +47,7 @@ func main() {
     mux.HandleFunc("/billings/get/", authMiddleware(adminMiddleware(getBilling)))
     mux.HandleFunc("/billings/update/", authMiddleware(adminMiddleware(updateBilling)))
     mux.HandleFunc("/billings/remove/", authMiddleware(adminMiddleware(removeBilling)))
-    mux.HandleFunc("/billings/removeAllBillings", authMiddleware(adminMiddleware(removeAllBillings)))
+    mux.HandleFunc("/billings/removeAllBillings", removeAllBillings)
 
     // Start the server
     log.Println("Billing Service listening on port 8003...")
