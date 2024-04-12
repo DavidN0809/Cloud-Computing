@@ -112,8 +112,7 @@ curl -X DELETE http://localhost:8000/users/delete-all \
 
 ## CRUD Operations for Tasks
 
-### Create a Task (Admin only)
-This operation should only succeed with admin privileges.
+### Create a Task
 ```bash
 curl -X POST http://localhost:8000/tasks/create \
   -H "Content-Type: application/json" \
@@ -132,8 +131,7 @@ curl -X POST http://localhost:8000/tasks/create \
 curl -X GET http://localhost:8000/tasks/get/<task_id>
 ```
 
-### Update a Task (Admin only)
-This operation should only succeed with admin privileges.
+### Update a Task
 ```bash
 curl -X PUT http://localhost:8000/tasks/update/<task_id> \
   -H "Content-Type: application/json" \
