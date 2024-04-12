@@ -68,8 +68,7 @@ curl -X POST http://localhost:8000/auth/login \
 Note: Be sure to update the placeholder `<admin_token>` with the actual admin JWT token obtained after logging in as an admin. Similarly, replace `<user_id>`, `<task_id>`, and `<billing_id>` with actual IDs as you proceed with the tests. The commands assuming the API is listening on `localhost` and port `8000`. Adjust the port if your services are running on different ports.
 
 ## CRUD Operations for Users
-### Create a User (Admin only)
-This operation should only succeed with admin privileges.
+### Create a User
 ```bash
 curl -X POST http://localhost:8000/users/create \
   -H "Content-Type: application/json" \
