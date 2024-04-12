@@ -46,8 +46,8 @@ func main() {
     mux.HandleFunc("/tasks/create", createTask)
     mux.HandleFunc("/tasks/get/", getTask)
     mux.HandleFunc("/tasks/update/", updateTask)
-    mux.HandleFunc("/tasks/remove/", adminMiddleware(removeTask))
-    mux.HandleFunc("/tasks/removeAllTasks", adminMiddleware(removeAllTasks))
+    mux.HandleFunc("/tasks/remove/", removeTask)
+    mux.HandleFunc("/tasks/removeAllTasks", removeAllTasks)
 
     // Start the server
     log.Println("Task Service listening on port 8002...")

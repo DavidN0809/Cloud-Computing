@@ -42,12 +42,12 @@ func main() {
     mux := http.NewServeMux()
 
     // Billing endpoints
-    mux.HandleFunc("/billings/list", adminMiddleware(listBillings))
-    mux.HandleFunc("/billings/create", adminMiddleware(createBilling))
-    mux.HandleFunc("/billings/get/", adminMiddleware(getBilling))
-    mux.HandleFunc("/billings/update/", adminMiddleware(updateBilling))
-    mux.HandleFunc("/billings/remove/", adminMiddleware(removeBilling))
-    mux.HandleFunc("/billings/removeAllBillings", adminMiddleware(removeAllBillings))
+    mux.HandleFunc("/billings/list", listBillings)
+    mux.HandleFunc("/billings/create", createBilling)
+    mux.HandleFunc("/billings/get/", getBilling)
+    mux.HandleFunc("/billings/update/", updateBilling)
+    mux.HandleFunc("/billings/remove/", removeBilling)
+    mux.HandleFunc("/billings/removeAllBillings", removeAllBillings)
 
     // Start the server
     log.Println("Billing Service listening on port 8003...")

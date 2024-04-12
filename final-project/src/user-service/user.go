@@ -44,9 +44,9 @@ func main() {
 	mux.HandleFunc("/users/list", listUsers)
 	mux.HandleFunc("/users/create", createUser)
 	mux.HandleFunc("/users/get/",getUser)
-	mux.HandleFunc("/users/update/", adminMiddleware(updateUser))
-	mux.HandleFunc("/users/remove/", adminMiddleware(removeUser))
-	mux.HandleFunc("/users/delete-all",adminMiddleware(deleteAllUsers))
+	mux.HandleFunc("/users/update/", updateUser)
+	mux.HandleFunc("/users/remove/", removeUser)
+	mux.HandleFunc("/users/delete-all",deleteAllUsers)
         mux.HandleFunc("/users/login", loginUser)
 
 	// Start the server
