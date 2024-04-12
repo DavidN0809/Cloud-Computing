@@ -77,13 +77,15 @@ curl -X POST http://localhost:8000/users/create \
 ### Get a User (Admin only)
 This operation should only succeed with admin privileges.
 ```bash
-curl -X GET http://localhost:8000/users/get/<user_id>
+curl -X GET http://localhost:8000/users/get/<user_id> \
+-H 'Authorization: Bearer <admin_token>' 
 ```
 ### Update a User (Admin only)
 This operation should only succeed with admin privileges.
 ``` bash
 curl -X PUT http://localhost:8000/users/update/<user_id> \
   -H "Content-Type: application/json" \
+   -H 'Authorization: Bearer <admin_token>' \
   -d '{"username":"newuser_updated","email":"newuser_updated@example.com","password":"newuserpass_updated"}'
 ```
 
@@ -98,13 +100,15 @@ curl -X DELETE http://localhost:8000/users/remove/<user_id> \
 ### List All Users (Admin only)
 This operation should only succeed with admin privileges.
 ```bash
-curl -X GET http://localhost:8000/users/list 
+curl -X GET http://localhost:8000/users/list \
+      -H 'Authorization: Bearer <admin_token>' 
 ```
 
 ### Delete All Users (Admin only)
 This operation should only succeed with admin privileges.
 ```bash
-curl -X DELETE http://localhost:8000/users/delete-all 
+curl -X DELETE http://localhost:8000/users/delete-all \
+      -H 'Authorization: Bearer <admin_token>'
 ```
 
 ## CRUD Operations for Tasks
@@ -143,7 +147,9 @@ curl -X PUT http://localhost:8000/tasks/update/<task_id> \
 ### Remove a Task (Admin only)
 This operation should only succeed with admin privileges.
 ```bash
-curl -X DELETE http://localhost:8000/tasks/remove/<task_id> 
+curl -X DELETE http://localhost:8000/tasks/remove/<task_id> \
+      -H 'Authorization: Bearer <admin_token>' 
+
 ```
 
 ### List All Tasks
@@ -154,7 +160,9 @@ curl -X GET http://localhost:8000/tasks/list
 ### Delete All Tasks (Admin only)
 This operation should only succeed with admin privileges.
 ```bash
-curl -X DELETE http://localhost:8000/tasks/removeAllTasks 
+curl -X DELETE http://localhost:8000/tasks/removeAllTasks \
+      -H 'Authorization: Bearer <admin_token>' 
+
 ```
 
 ## CRUD Operations for Billing
@@ -164,6 +172,7 @@ This operation should only succeed with admin privileges.
 ```bash
 curl -X POST http://localhost:8000/billings/create \
   -H "Content-Type: application/json" \
+  -H 'Authorization: Bearer <admin_token>' \
   -d '{
         "user_id": "<user_id>",
         "task_id": "<task_id>",
@@ -175,7 +184,8 @@ curl -X POST http://localhost:8000/billings/create \
 ### Get a Billing  (Admin only)
 This operation should only succeed with admin privileges.
 ```bash
-curl -X GET http://localhost:8000/billings/get/<billing_id>
+curl -X GET http://localhost:8000/billings/get/<billing_id> \
+      -H 'Authorization: Bearer <admin_token>' 
 ```
 
 ### Update a Billing (Admin only)
@@ -183,6 +193,7 @@ This operation should only succeed with admin privileges.
 ```bash
 curl -X PUT http://localhost:8000/billings/update/<billing_id> \
   -H "Content-Type: application/json" \
+  -H 'Authorization: Bearer <admin_token>'  \
   -d '{
         "user_id": "<user_id>",
         "task_id": "<task_id>",
@@ -194,13 +205,15 @@ curl -X PUT http://localhost:8000/billings/update/<billing_id> \
 ### Remove a Billing (Admin only)
 This operation should only succeed with admin privileges.
 ```bash
-curl -X DELETE http://localhost:8000/billings/remove/<billing_id> 
+curl -X DELETE http://localhost:8000/billings/remove/<billing_id> \
+     -H 'Authorization: Bearer <admin_token>' 
 ```
 
 ### List All Billings (Admin only)
 This operation should only succeed with admin privileges.
 ```bash
-curl -X GET http://localhost:8000/billings/list 
+curl -X GET http://localhost:8000/billings/list \
+      -H 'Authorization: Bearer <admin_token>' 
 ```
 
 ### Delete All Billings (Admin only)
