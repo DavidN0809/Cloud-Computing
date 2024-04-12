@@ -46,7 +46,7 @@ func main() {
     mux.HandleFunc("/tasks/create", createTask)
     mux.HandleFunc("/tasks/get/", getTask)
     mux.HandleFunc("/tasks/update/", updateTask)
-    mux.HandleFunc("/tasks/remove/", removeTask)
+    mux.HandleFunc("/tasks/remove/",  authMiddleware(adminMiddleware(removeTask)))
     mux.HandleFunc("/tasks/removeAllTasks", removeAllTasks)
 
     // Start the server
