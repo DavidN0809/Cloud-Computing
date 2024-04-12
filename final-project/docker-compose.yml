@@ -33,7 +33,7 @@ services:
 
   user-service:
     build:
-      context: ./user-service
+      context: ./src/user-service
       dockerfile: Dockerfile
     container_name: user-service
     depends_on:
@@ -49,7 +49,7 @@ services:
 
   task-service:
     build:
-      context: ./task-service
+      context: ./src/task-service
       dockerfile: Dockerfile
     container_name: task-service
     depends_on:
@@ -65,7 +65,7 @@ services:
 
   billing-service:
     build:
-      context: ./billing-service
+      context: ./src/billing-service
       dockerfile: Dockerfile
     container_name: billing-service
     depends_on:
@@ -81,7 +81,7 @@ services:
 
   api-gateway:
     build:
-      context: ./api-gateway
+      context: ./src/api-gateway
       dockerfile: Dockerfile
     container_name: api-gateway
     depends_on:

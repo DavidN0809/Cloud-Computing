@@ -41,10 +41,10 @@ func main() {
 	mux := http.NewServeMux()
 
 	// User endpoints
-	mux.HandleFunc("/users/list", listUsers)
+	mux.HandleFunc("/users/list", adminMiddleware(listUsers))
 	mux.HandleFunc("/users/create", createUser)
-	mux.HandleFunc("/users/get/", getUser)
-	mux.HandleFunc("/users/update/", updateUser)
+	mux.HandleFunc("/users/get/", adminMiddleware(getUser))
+	mux.HandleFunc("/users/update/", adminMiddleware(updateUser))
 	mux.HandleFunc("/users/remove/", adminMiddleware(removeUser))
 	mux.HandleFunc("/users/delete-all",adminMiddleware(deleteAllUsers))
         mux.HandleFunc("/users/login", loginUser)
@@ -162,13 +162,6 @@ type User struct {
 func createUser(w http.ResponseWriter, req *http.Request) {
   
     var user User
-    err := json.NewDecoder(req.Body).Decode(&user)
-    if err != nil {
-        log.Printf("Failed to decode request body: %v", err)
-        http.Error(w, "Invalid request body", http.StatusBadRequest)
-        return
-    }
-
     // Set default role to "regular" if not specified
     if user.Role == "" {
         user.Role = "regular"
@@ -187,6 +180,7 @@ func createUser(w http.ResponseWriter, req *http.Request) {
 
     log.Printf("User created successfully: %+v", user)
     w.Header().Set("Content-Type", "application/json")
+    w.WriteHeader(http.StatusCreated) // Set status to 201 Created
     json.NewEncoder(w).Encode(user)
 }
 
@@ -225,8 +219,8 @@ func loginUser(w http.ResponseWriter, req *http.Request) {
     }
 
     log.Printf("User logged in successfully: %+v", user)
-
     w.Header().Set("Content-Type", "application/json")
+    w.WriteHeader(http.StatusOK) // Explicitly set the 200 OK status
     json.NewEncoder(w).Encode(user)
 }
 
@@ -261,9 +255,9 @@ func getUser(w http.ResponseWriter, req *http.Request) {
 	}
 
 	log.Printf("User found: %+v", user)
-
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(user)
+	w.WriteHeader(http.StatusOK)
+       json.NewEncoder(w).Encode(user)
 }
 
 func updateUser(w http.ResponseWriter, req *http.Request) {
@@ -309,7 +303,6 @@ func updateUser(w http.ResponseWriter, req *http.Request) {
 	}
 
 	log.Printf("User updated successfully: %+v", user)
-
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -343,7 +336,6 @@ func removeUser(w http.ResponseWriter, req *http.Request) {
 	}
 
 	log.Printf("User removed successfully: %s", userID)
-
 	w.WriteHeader(http.StatusNoContent)
 }
 
@@ -374,8 +366,8 @@ func listUsers(w http.ResponseWriter, req *http.Request) {
 	}
 
 	log.Printf("Users listed successfully: %+v", users)
-
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(users)
 }
 
@@ -397,6 +389,5 @@ func deleteAllUsers(w http.ResponseWriter, req *http.Request) {
 	}
 
 	log.Println("All users deleted successfully")
-
 	w.WriteHeader(http.StatusNoContent)
 }
