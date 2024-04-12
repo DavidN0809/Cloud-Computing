@@ -4,13 +4,21 @@ This document outlines the steps to test the user management system's functional
 
 ## Setup
 Install docker
-``` sudo curl -fsSL https://get.docker.com -o get-docker.sh ```
-``` sudo sh get-docker.sh ```
+``` 
+sudo curl -fsSL https://get.docker.com -o get-docker.sh
+```
+```
+sudo sh get-docker.sh 
+```
 
 Before you begin testing, ensure your local server is running:
-```docker compose up -d```
+```
+docker compose up -d
+```
 To rebuild after making changes to the code, use:
-```docker compose up --build -d```
+```
+docker compose up --build -d
+```
 
 
 ## User Registration and Login
