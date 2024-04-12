@@ -138,7 +138,8 @@ curl -X POST http://localhost:8000/billings/create \
       }'
 ```
 
-### Get a Billing
+### Get a Billing  (Admin only)
+This operation should only succeed with admin privileges.
 ```bash
 curl -X GET http://localhost:8000/billings/get/<billing_id>
 ```
