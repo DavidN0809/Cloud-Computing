@@ -90,7 +90,7 @@ curl -X PUT http://localhost:8000/users/update/<user_id> \
 ### Remove a User (Admin only)
 This operation should only succeed with admin privileges.
 ```bash
-curl -X DELETE http://localhost:8000/users/remove/<user_id> \
+curl -X DELETE http://localhost:8000/users/remove/<user_id> 
 ```
 
 ### List All Users (Admin only)
@@ -102,7 +102,7 @@ curl -X GET http://localhost:8000/users/list
 ### Delete All Users (Admin only)
 This operation should only succeed with admin privileges.
 ```bash
-curl -X DELETE http://localhost:8000/users/delete-all \
+curl -X DELETE http://localhost:8000/users/delete-all 
 ```
 
 ## CRUD Operations for Tasks
@@ -141,7 +141,7 @@ curl -X PUT http://localhost:8000/tasks/update/<task_id> \
 ### Remove a Task (Admin only)
 This operation should only succeed with admin privileges.
 ```bash
-curl -X DELETE http://localhost:8000/tasks/remove/<task_id> \
+curl -X DELETE http://localhost:8000/tasks/remove/<task_id> 
 ```
 
 ### List All Tasks
@@ -152,7 +152,7 @@ curl -X GET http://localhost:8000/tasks/list
 ### Delete All Tasks (Admin only)
 This operation should only succeed with admin privileges.
 ```bash
-curl -X DELETE http://localhost:8000/tasks/removeAllTasks \
+curl -X DELETE http://localhost:8000/tasks/removeAllTasks 
 ```
 
 ## CRUD Operations for Billing
@@ -192,18 +192,18 @@ curl -X PUT http://localhost:8000/billings/update/<billing_id> \
 ### Remove a Billing (Admin only)
 This operation should only succeed with admin privileges.
 ```bash
-curl -X DELETE http://localhost:8000/billings/remove/<billing_id> \
+curl -X DELETE http://localhost:8000/billings/remove/<billing_id> 
 ```
 
 ### List All Billings (Admin only)
 This operation should only succeed with admin privileges.
 ```bash
-curl -X GET http://localhost:8000/billings/list \
+curl -X GET http://localhost:8000/billings/list 
 ```
 
 ### Delete All Billings (Admin only)
 This operation should only succeed with admin privileges.
 ```bash
-curl -X DELETE http://localhost:8000/billings/removeAllBillings \
+curl -X DELETE http://localhost:8000/billings/removeAllBillings 
 ```
 
