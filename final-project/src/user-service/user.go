@@ -42,12 +42,12 @@ func main() {
 	mux := http.NewServeMux()
 
 	// User endpoints
-	mux.HandleFunc("/users/list", listUsers)
+	mux.HandleFunc("/users/list",  authMiddleware(adminMiddleware(listUsers)))
 	mux.HandleFunc("/users/create", createUser)
-	mux.HandleFunc("/users/get/",getUser)
-	mux.HandleFunc("/users/update/", updateUser)
+	mux.HandleFunc("/users/get/",  authMiddleware(adminMiddleware(getUser)))
+	mux.HandleFunc("/users/update/",  authMiddleware(adminMiddleware(updateUser)))
         mux.HandleFunc("/users/remove/", authMiddleware(adminMiddleware(removeUser)))
-	mux.HandleFunc("/users/delete-all",deleteAllUsers)
+	mux.HandleFunc("/users/delete-all", deleteAllUsers)
         mux.HandleFunc("/users/login", loginUser)
 
 	// Start the server
