@@ -90,7 +90,9 @@ curl -X PUT http://localhost:8000/users/update/<user_id> \
 ### Remove a User (Admin only)
 This operation should only succeed with admin privileges.
 ```bash
-curl -X DELETE http://localhost:8000/users/remove/<user_id> 
+curl -X DELETE http://localhost:8000/users/remove/<user_id> \
+-H 'Authorization: Bearer <admin_token>'
+
 ```
 
 ### List All Users (Admin only)
