@@ -114,8 +114,18 @@ type Task struct {
     AssignedTo  primitive.ObjectID `bson:"assigned_to" json:"assigned_to"`
     Status      string             `bson:"status" json:"status"`
     Hours       float64            `bson:"hours" json:"hours"`
+    InvoiceID   primitive.ObjectID
 }
-
+type Invoice struct {
+    ID           primitive.ObjectID `bson:"_id" json:"id"`                // Unique identifier for the invoice
+    TaskID       primitive.ObjectID `bson:"task_id" json:"task_id"`       // Associated task ID
+    UserID       primitive.ObjectID `bson:"user_id" json:"user_id"`       // User ID of the person responsible for the task
+    Description  string             `bson:"description" json:"description"` // Description or title of the invoice
+    DateIssued   time.Time          `bson:"date_issued" json:"date_issued"` // Date when the invoice was issued
+    Hours        float64            `bson:"hours" json:"hours"`           // Total hours worked on the task
+    HourlyRate   float64            `bson:"hourly_rate" json:"hourly_rate"` // Hourly rate for the work
+    Amount  float64            `bson:"total_amount" json:"total_amount"` // Total amount due
+}
 func createTask(w http.ResponseWriter, req *http.Request) {
     if req.Method != http.MethodPost {
         http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -131,6 +141,7 @@ func createTask(w http.ResponseWriter, req *http.Request) {
 
     collection := client.Database("taskmanagement").Collection("tasks")
     task.ID = primitive.NewObjectID()
+
     _, err = collection.InsertOne(context.TODO(), task)
     if err != nil {
         http.Error(w, "Failed to create task", http.StatusInternalServerError)
@@ -189,7 +200,16 @@ func updateTask(w http.ResponseWriter, req *http.Request) {
     }
 
     collection := client.Database("taskmanagement").Collection("tasks")
-    filter := bson.M{"_id": objectID}
+
+    // Fetch the current task to check the current status
+    var currentTask Task
+    err = collection.FindOne(context.TODO(), bson.M{"_id": objectID}).Decode(&currentTask)
+    if err != nil {
+        http.Error(w, "Task not found", http.StatusNotFound)
+        return
+    }
+
+    // Prepare the update object
     update := bson.M{"$set": bson.M{
         "title":       task.Title,
         "description": task.Description,
@@ -198,7 +218,15 @@ func updateTask(w http.ResponseWriter, req *http.Request) {
         "hours":       task.Hours,
     }}
 
-    _, err = collection.UpdateOne(context.TODO(), filter, update)
+    // Check if the status is being updated to "done" and was not "done" before
+    if currentTask.Status != "done" && task.Status == "done" {
+        // Generate a new ObjectID to use as invoice_id
+        invoiceID := primitive.NewObjectID()
+        update["$set"].(bson.M)["InvoiceID"] = invoiceID
+        log.Printf("Task updated to 'done'. New InvoiceID: %v generated", invoiceID)
+    }
+
+    _, err = collection.UpdateOne(context.TODO(), bson.M{"_id": objectID}, update)
     if err != nil {
         http.Error(w, "Failed to update task", http.StatusInternalServerError)
         return
@@ -206,6 +234,9 @@ func updateTask(w http.ResponseWriter, req *http.Request) {
 
     w.WriteHeader(http.StatusNoContent)
 }
+
+
+
 
 func removeTask(w http.ResponseWriter, req *http.Request) {
     if req.Method != http.MethodDelete {
@@ -271,4 +302,34 @@ func removeAllTasks(w http.ResponseWriter, req *http.Request) {
         http.Error(w, "Failed to remove all tasks", http.StatusInternalServerError)
         return
     }
+}
+const hourlyRate = 100.0 // Adjust this value as necessary
+
+func createInvoice(task Task) (primitive.ObjectID, error) {
+    invoice := Invoice{
+        TaskID: task.ID,
+        UserID: task.AssignedTo, // assuming the assigned user is the one being billed
+        Description: "Invoice for " + task.Title,
+        DateIssued: time.Now(),
+        Hours: task.Hours,
+        Amount: task.Hours * hourlyRate,
+    }
+
+    collection := client.Database("taskmanagement").Collection("invoices")
+    result, err := collection.InsertOne(context.TODO(), invoice)
+    if err != nil {
+        log.Printf("Failed to create Invoice: %v", err)
+        return primitive.NilObjectID, err
+    }
+
+    return result.InsertedID.(primitive.ObjectID), nil
+}
+func getInvoiceByTaskID(taskID primitive.ObjectID) (*Invoice, error) {
+    var invoice Invoice
+    collection := client.Database("taskmanagement").Collection("invoices")
+    err := collection.FindOne(context.TODO(), bson.M{"task_id": taskID}).Decode(&invoice)
+    if err != nil {
+        return nil, err
+    }
+    return &invoice, nil
 }
