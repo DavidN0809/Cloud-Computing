@@ -1,7 +1,7 @@
 // Launch microservice server- main.go
 package main
 import (
-"./microservice"
+"github.com/DavidN0809/Cloud-Computing/lab11/microservice"
 "log"
 )
 func main() {

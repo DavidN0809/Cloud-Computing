@@ -1,4 +1,7 @@
 FROM golang:1.15-alpine AS build
+
+RUN apk add --no-cache git
+
 WORKDIR /src
 COPY microservice/go.mod .
 RUN go mod download
