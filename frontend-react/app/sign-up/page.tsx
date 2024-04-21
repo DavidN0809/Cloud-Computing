@@ -45,13 +45,20 @@ export default function SignUp() {
     const url = 'http://localhost:8000/auth/register';
 
     try {
+      console.log({
+        username: data.get('UserName'),
+        email: data.get('email'),
+        password: data.get('password'),
+        role: isAdmin ? 'admin' : 'regular'
+      });
+      
       const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          username: data.get('email'),  // Assuming 'email' field is used as 'username'
+          username: data.get('UserName'), 
           email: data.get('email'),
           password: data.get('password'),
           role: isAdmin ? 'admin' : 'regular'
@@ -61,7 +68,6 @@ export default function SignUp() {
       if (response.ok) {
         const result = await response.json();
         console.log('Registration successful:', result);
-        // Optional: Redirect or inform the user of success
       } else {
         throw new Error('Registration failed');
       }
