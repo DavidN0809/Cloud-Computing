@@ -14,6 +14,12 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
+import { AlertColor } from '@mui/material/Alert';
+
+// 定义 Severity 类型
+type Severity = AlertColor;
 
 
 
@@ -32,13 +38,57 @@ function Copyright(props: any) {
 const defaultTheme = createTheme();
 
 export default function SignIn() {
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const [open, setOpen] = React.useState(false);
+  const [message, setMessage] = React.useState('');
+  const [severity, setSeverity] = React.useState<Severity>('success');
+
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    console.log({
-      email: data.get('email'),
-      password: data.get('password'),
-    });
+    const url = 'http://localhost:8000/auth/login';
+    
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          username: data.get('username'),
+          password: data.get('password'),
+        })
+      });
+      console.log({
+        email: data.get('username'),
+        password: data.get('password'),
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
+        console.log('login successful:', result);
+        setMessage('login successful');
+        setSeverity('success');
+        window.location.href = '/dashboard';
+      } else {
+        throw new Error('login failed');
+        
+      }
+    } catch (error) {
+      console.error('Error during login:', error);
+      setMessage('login failed');
+      setSeverity('error');
+    }
+    setOpen(true);
+    
+  };
+
+  const handleClose = (event?: React.SyntheticEvent | Event, reason?: string) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+
+    setOpen(false);
   };
 
   return (
@@ -64,10 +114,10 @@ export default function SignIn() {
               margin="normal"
               required
               fullWidth
-              id="email"
-              label="Email Address"
-              name="email"
-              autoComplete="email"
+              id="username"
+              label="User Name"
+              name="username"
+              autoComplete="username"
               autoFocus
             />
             <TextField

@@ -14,6 +14,13 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
+import { AlertColor } from '@mui/material/Alert';
+
+// 定义 Severity 类型
+type Severity = AlertColor;
+
 
 function Copyright(props: any) {
   return (
@@ -32,11 +39,14 @@ function Copyright(props: any) {
 const defaultTheme = createTheme();
 
 export default function SignUp() {
+  const [isAdmin, setIsAdmin] = React.useState(false);
+  const [open, setOpen] = React.useState(false);
+  const [message, setMessage] = React.useState('');
+  const [severity, setSeverity] = React.useState<Severity>('success');
 
-  const [isAdmin, setIsAdmin] = React.useState(false);  // State to track if the user is an admin
 
   const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setIsAdmin(event.target.checked);  // Update state based on checkbox
+    setIsAdmin(event.target.checked);
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -45,20 +55,13 @@ export default function SignUp() {
     const url = 'http://localhost:8000/auth/register';
 
     try {
-      console.log({
-        username: data.get('UserName'),
-        email: data.get('email'),
-        password: data.get('password'),
-        role: isAdmin ? 'admin' : 'regular'
-      });
-      
       const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          username: data.get('UserName'), 
+          username: data.get('UserName'),
           email: data.get('email'),
           password: data.get('password'),
           role: isAdmin ? 'admin' : 'regular'
@@ -68,17 +71,30 @@ export default function SignUp() {
       if (response.ok) {
         const result = await response.json();
         console.log('Registration successful:', result);
+        setMessage('Registration successful');
+        setSeverity('success');
+
+        setTimeout(() => {
+        window.location.href = '/';
+    }, 3000);
       } else {
         throw new Error('Registration failed');
       }
     } catch (error) {
       console.error('Error during registration:', error);
+      setMessage('Registration failed');
+      setSeverity('error');
     }
-    console.log({
-      email: data.get('email'),
-      password: data.get('password'),
-    });
+    setOpen(true);
     
+  };
+
+  const handleClose = (event?: React.SyntheticEvent | Event, reason?: string) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+
+    setOpen(false);
   };
 
   return (
@@ -181,6 +197,11 @@ export default function SignUp() {
           </Box>
         </Box>
         <Copyright sx={{ mt: 5 }} />
+        <Snackbar open={open} autoHideDuration={6000} onClose={handleClose}>
+          <Alert onClose={handleClose} severity={severity} sx={{ width: '100%' }}>
+            {message}
+          </Alert>
+        </Snackbar>
       </Container>
     </ThemeProvider>
   );
