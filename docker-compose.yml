@@ -1,0 +1,100 @@
+version: '3.8'
+
+services:
+  user-mongodb:
+    image: mongo:latest
+    container_name: user-mongodb
+    networks:
+      - mynetwork
+    ports:
+      - "27017:27017"
+    logging:
+      driver: "none"
+
+  task-mongodb:
+    image: mongo:latest
+    container_name: task-mongodb
+    networks:
+      - mynetwork
+    ports:
+      - "27018:27017"
+    logging:
+      driver: "none"
+
+  billing-mongodb:
+    image: mongo:latest
+    container_name: billing-mongodb
+    networks:
+      - mynetwork
+    ports:
+      - "27019:27017"
+    logging:
+      driver: "none"
+
+  user-service:
+    build:
+      context: ./src/user-service
+      dockerfile: Dockerfile
+    container_name: user-service
+    depends_on:
+      - user-mongodb
+    ports:
+      - "8001:8001"
+    environment:
+      - MONGO_URI=mongodb://user-mongodb:27017/userDB
+    networks:
+      - mynetwork
+    dns:
+      - 1.1.1.1
+
+  task-service:
+    build:
+      context: ./src/task-service
+      dockerfile: Dockerfile
+    container_name: task-service
+    depends_on:
+      - task-mongodb
+    ports:
+      - "8002:8002"
+    environment:
+      - MONGO_URI=mongodb://task-mongodb:27017/taskDB
+    networks:
+      - mynetwork
+    dns:
+      - 1.1.1.1
+
+  billing-service:
+    build:
+      context: ./src/billing-service
+      dockerfile: Dockerfile
+    container_name: billing-service
+    depends_on:
+      - billing-mongodb
+    ports:
+      - "8003:8003"
+    environment:
+      - MONGO_URI=mongodb://billing-mongodb:27017/billingDB
+    networks:
+      - mynetwork
+    dns:
+      - 1.1.1.1
+
+  api-gateway:
+    build:
+      context: ./src/api-gateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    depends_on:
+      - user-service
+      - task-service
+      - billing-service
+    ports:
+      - "8000:8000"
+    networks:
+      - mynetwork
+    dns:
+      - 1.1.1.1
+
+networks:
+  mynetwork:
+    driver: bridge
