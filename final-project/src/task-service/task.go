@@ -16,7 +16,7 @@ import (
 var client *mongo.Client
 
 func main() {
-	// Create new MongoDB client
+	// Create a new MongoDB client
 	var err error
 	client, err = mongo.NewClient(options.Client().ApplyURI("mongodb://task-mongodb:27017"))
 	if err != nil {
@@ -115,6 +115,7 @@ type Task struct {
 	Status      string             `bson:"status" json:"status"`
 	Hours       float64            `bson:"hours" json:"hours"`
 	InvoiceID   primitive.ObjectID
+	ParentTask  *primitive.ObjectID `bson:"parent_task,omitempty" json:"parent_task,omitempty"`
 }
 type Invoice struct {
 	ID          primitive.ObjectID `bson:"_id" json:"id"`                    // Unique identifier for the invoice
@@ -128,11 +129,6 @@ type Invoice struct {
 }
 
 func createTask(w http.ResponseWriter, req *http.Request) {
-	if req.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
 	var task Task
 	err := json.NewDecoder(req.Body).Decode(&task)
 	if err != nil {
@@ -140,10 +136,17 @@ func createTask(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	collection := client.Database("taskmanagement").Collection("tasks")
-	task.ID = primitive.NewObjectID()
+	if task.ParentTask != nil {
+		var parentTask Task
+		err = client.Database("taskmanagement").Collection("tasks").FindOne(context.TODO(), bson.M{"_id": *task.ParentTask}).Decode(&parentTask)
+		if err != nil {
+			http.Error(w, "Parent task not found", http.StatusNotFound)
+			return
+		}
+	}
 
-	_, err = collection.InsertOne(context.TODO(), task)
+	task.ID = primitive.NewObjectID()
+	_, err = client.Database("taskmanagement").Collection("tasks").InsertOne(context.TODO(), task)
 	if err != nil {
 		http.Error(w, "Failed to create task", http.StatusInternalServerError)
 		return
@@ -154,11 +157,6 @@ func createTask(w http.ResponseWriter, req *http.Request) {
 }
 
 func getTask(w http.ResponseWriter, req *http.Request) {
-	if req.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
 	taskID := req.URL.Path[len("/tasks/get/"):]
 	objectID, err := primitive.ObjectIDFromHex(taskID)
 	if err != nil {
@@ -166,18 +164,30 @@ func getTask(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	collection := client.Database("taskmanagement").Collection("tasks")
-	filter := bson.M{"_id": objectID}
-
 	var task Task
-	err = collection.FindOne(context.TODO(), filter).Decode(&task)
+	err = client.Database("taskmanagement").Collection("tasks").FindOne(context.TODO(), bson.M{"_id": objectID}).Decode(&task)
 	if err != nil {
 		http.Error(w, "Task not found", http.StatusNotFound)
 		return
 	}
 
+	var subtasks []Task
+	cursor, err := client.Database("taskmanagement").Collection("tasks").Find(context.TODO(), bson.M{"parent_task": objectID})
+	if err == nil {
+		defer cursor.Close(context.Background())
+		cursor.All(context.Background(), &subtasks)
+	}
+
+	response := struct {
+		Task     Task   `json:"task"`
+		Subtasks []Task `json:"subtasks"`
+	}{
+		Task:     task,
+		Subtasks: subtasks,
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(task)
+	json.NewEncoder(w).Encode(response)
 }
 
 func updateTask(w http.ResponseWriter, req *http.Request) {
@@ -193,16 +203,25 @@ func updateTask(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	var task Task
-	err = json.NewDecoder(req.Body).Decode(&task)
+	var updates map[string]interface{}
+	err = json.NewDecoder(req.Body).Decode(&updates)
 	if err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	collection := client.Database("taskmanagement").Collection("tasks")
+	// Prepare update document
+	updateDoc := bson.M{"$set": bson.M{}}
+	for key, value := range updates {
+		// Ensure only allowed fields are updated
+		switch key {
+		case "title", "description", "assigned_to", "status", "hours":
+			updateDoc["$set"].(bson.M)[key] = value
+		}
+	}
 
-	// Fetch the current task to check the current status
+	collection := client.Database("taskmanagement").Collection("tasks")
+	// Fetch the current task to compare changes
 	var currentTask Task
 	err = collection.FindOne(context.TODO(), bson.M{"_id": objectID}).Decode(&currentTask)
 	if err != nil {
@@ -210,24 +229,15 @@ func updateTask(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// Prepare the update object
-	update := bson.M{"$set": bson.M{
-		"title":       task.Title,
-		"description": task.Description,
-		"assigned_to": task.AssignedTo,
-		"status":      task.Status,
-		"hours":       task.Hours,
-	}}
-
-	// Check if the status is being updated to "done" and was not "done" before
-	if currentTask.Status != "done" && task.Status == "done" {
-		// Generate a new ObjectID to use as invoice_id
+	// Handle InvoiceID creation if task status changes to 'done'
+	if currentTask.Status != "done" && updates["status"] == "done" {
+		// Generate a new ObjectID for InvoiceID if it's transitioning to 'done'
 		invoiceID := primitive.NewObjectID()
-		update["$set"].(bson.M)["InvoiceID"] = invoiceID
+		updateDoc["$set"].(bson.M)["InvoiceID"] = invoiceID
 		log.Printf("Task updated to 'done'. New InvoiceID: %v generated", invoiceID)
 	}
 
-	_, err = collection.UpdateOne(context.TODO(), bson.M{"_id": objectID}, update)
+	_, err = collection.UpdateOne(context.TODO(), bson.M{"_id": objectID}, updateDoc)
 	if err != nil {
 		http.Error(w, "Failed to update task", http.StatusInternalServerError)
 		return
