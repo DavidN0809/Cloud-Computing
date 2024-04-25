@@ -223,3 +223,34 @@ curl -X DELETE http://localhost:8000/billings/removeAllBillings \
       -H 'Authorization: Bearer <admin_token>' 
 ```
 
+### Create a Parent Task
+```bash
+curl -X POST http://localhost:8000/tasks/create \
+-H "Content-Type: application/json" \
+-d '{"title": "Parent Task", "description": "This is a parent task.", "assigned_to": "<Assignee_ObjectID>", "status": "open", "hours": 0}'
+
+```
+
+### Create a Child Task
+```bash
+curl -X POST http://localhost:8000/tasks/create \
+-H "Content-Type: application/json" \
+-d '{"title": "Child Task", "description": "This is a child task.", "assigned_to": "<Assignee_ObjectID>", "status": "open", "hours": 0, "parent_task": "<ParentTask_ObjectID>"}'
+
+```
+
+### Update the Child Task
+```bash
+curl -X PUT http://localhost:8000/tasks/update/<ChildTask_ObjectID> \
+-H "Content-Type: application/json" \
+-d '{"status": "done", "hours": 8}'
+
+```
+
+### Verify the Update
+```bash
+curl -X GET http://localhost:8000/tasks/get/<ChildTask_ObjectID>
+
+```
+
+
