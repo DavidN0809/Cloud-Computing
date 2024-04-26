@@ -18,6 +18,8 @@ import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import { AlertColor } from '@mui/material/Alert';
 
+import axios from 'axios';
+
 // 定义 Severity 类型
 type Severity = AlertColor;
 
@@ -55,17 +57,22 @@ export default function SignUp() {
     const url = 'http://localhost:8000/auth/register';
 
     try {
+      const payload = {
+        username: data.get('UserName'), // 确保字段名与表单中的name属性匹配
+        email: data.get('email'),
+        password: data.get('password'),
+        role: isAdmin ? 'admin' : 'regular' // 确保isAdmin已经正确定义
+      };
+
+      console.log("Payload to send:", JSON.stringify(payload))
+
       const response = await fetch(url, {
         method: 'POST',
+        mode: 'no-cors',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          username: data.get('UserName'),
-          email: data.get('email'),
-          password: data.get('password'),
-          role: isAdmin ? 'admin' : 'regular'
-        })
+        body: JSON.stringify(payload)
       });
 
       if (response.ok) {

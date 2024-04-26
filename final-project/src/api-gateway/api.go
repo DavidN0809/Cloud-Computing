@@ -50,6 +50,7 @@ func handleRegister(w http.ResponseWriter, r *http.Request) {
 
     // Log the raw request body
     body, err := io.ReadAll(r.Body)
+
     if err != nil {
         log.Println("Failed to read request body:", err)
         http.Error(w, "Failed to read request body", http.StatusInternalServerError)
@@ -57,6 +58,10 @@ func handleRegister(w http.ResponseWriter, r *http.Request) {
     }
     log.Printf("Request body: %s", string(body))
 
+
+    log.Printf("Before parsing JSON, body is: %s", string(body))
+    err = json.Unmarshal(body, &user)
+    log.Printf("Parsed user: %+v", user)
     err = json.Unmarshal(body, &user)
     if err != nil {
         log.Println("Failed to parse request body:", err)
