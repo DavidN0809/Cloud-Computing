@@ -17,3 +17,15 @@ bun dev
 ```
 
 Third open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+
+
+##################################################################################################
+
+## run "npm install" if you meet:
+> frontend-react@0.1.0 dev
+> next dev
+
+sh: 1: next: not found
+
+or something like that
