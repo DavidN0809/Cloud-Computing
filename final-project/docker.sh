@@ -7,4 +7,4 @@ sudo docker stop $(sudo docker ps -aq)
 #docker compose up -d
 
 echo "Rebuilding services (if code was changed)..."
-docker-compose up --build -d
+docker compose up --build
