@@ -51,7 +51,6 @@ export default function SignIn() {
     try {
       const response = await fetch(url, {
         method: 'POST',
-        mode: 'no-cors',
         headers: {
           'Content-Type': 'application/json'
         },
@@ -65,13 +64,27 @@ export default function SignIn() {
         password: data.get('password'),
       });
       if (response.ok) {
-        const result = await response.json();
+        const text = await response.text();
+        console.log('Raw response:', text);
+
+        const rawResult = JSON.stringify(text)
+        const result = JSON.parse(rawResult);
+
         console.log('login successful:', result);
         setMessage('login successful');
         setSeverity('success');
 
+        const jsonParts = text.split('}')
+                              .map(part => part.trim()) // 去除多余的空格
+                              .filter(part => part) // 过滤掉空字符串
+                              .map(part => part + '}'); // 再将分割的 "}" 加回去
+
+        const tokenObject = JSON.parse(jsonParts[0]);
+        const token = tokenObject.token;
+        console.log('Token:', token); // 这里会输出 token
+
         const expiresIn = 60 * 60 * 24 * 7; // Token expires in 7 days
-        document.cookie = `token=${result.token}; max-age=${expiresIn}; path=/`;
+        document.cookie = `token=${token}; max-age=${expiresIn}; path=/`;
 
         window.location.href = '/dashboard';
       } else {

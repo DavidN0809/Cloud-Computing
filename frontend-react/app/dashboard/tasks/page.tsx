@@ -20,7 +20,9 @@ import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import { mainListItems, secondaryListItems } from '@/components/Dashboard/listItems';
-import Chart from '@/components/Dashboard/Chart';
+import TaskAction from '@/components/Dashboard/task/TaskAction';
+
+
 import Deposits from '@/components/Dashboard/Deposits';
 import Orders from '@/components/Dashboard/Orders';
 
@@ -168,8 +170,20 @@ export default function Dashboard() {
         >
           <Toolbar />
           <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-            <Grid container spacing={3}>
-             
+            <Grid container spacing={2}>
+             {/* craete task */}
+             <Grid item xs={12} md={8} lg={12}>
+                <Paper
+                  sx={{
+                    p: 2,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    height: 120,
+                  }}
+                >
+                  <TaskAction />
+                </Paper>
+              </Grid>
               
 
 
