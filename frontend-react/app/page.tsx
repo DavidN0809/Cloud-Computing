@@ -64,12 +64,15 @@ export default function SignIn() {
         email: data.get('username'),
         password: data.get('password'),
       });
-      window.location.href = '/dashboard';
       if (response.ok) {
         const result = await response.json();
         console.log('login successful:', result);
         setMessage('login successful');
         setSeverity('success');
+
+        const expiresIn = 60 * 60 * 24 * 7; // Token expires in 7 days
+        document.cookie = `token=${result.token}; max-age=${expiresIn}; path=/`;
+
         window.location.href = '/dashboard';
       } else {
         console.log('in else');
