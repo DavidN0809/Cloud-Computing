@@ -115,9 +115,12 @@ type Task struct {
 	AssignedTo  primitive.ObjectID `bson:"assigned_to" json:"assigned_to"`
 	Status      string             `bson:"status" json:"status"`
 	Hours       float64            `bson:"hours" json:"hours"`
-	InvoiceID   primitive.ObjectID
+	StartDate   time.Time          `bson:"start_date" json:"start_date"`
+	EndDate     time.Time          `bson:"end_date" json:"end_date"`
+	InvoiceID   primitive.ObjectID `bson:"invoice_id,omitempty" json:"invoice_id,omitempty"`
 	ParentTask  *primitive.ObjectID `bson:"parent_task,omitempty" json:"parent_task,omitempty"`
 }
+
 type Invoice struct {
 	ID          primitive.ObjectID `bson:"_id" json:"id"`                    // Unique identifier for the invoice
 	TaskID      primitive.ObjectID `bson:"task_id" json:"task_id"`           // Associated task ID
@@ -130,32 +133,43 @@ type Invoice struct {
 }
 
 func createTask(w http.ResponseWriter, req *http.Request) {
-	var task Task
-	err := json.NewDecoder(req.Body).Decode(&task)
-	if err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
+    var task Task
+    err := json.NewDecoder(req.Body).Decode(&task)
+    if err != nil {
+        http.Error(w, "Invalid request body", http.StatusBadRequest)
+        return
+    }
 
-	if task.ParentTask != nil {
-		var parentTask Task
-		err = client.Database("taskmanagement").Collection("tasks").FindOne(context.TODO(), bson.M{"_id": *task.ParentTask}).Decode(&parentTask)
-		if err != nil {
-			http.Error(w, "Parent task not found", http.StatusNotFound)
-			return
-		}
-	}
+    // Check for overlapping tasks
+    var overlappingTasks []Task
+    filter := bson.M{
+        "assigned_to": task.AssignedTo,
+        "end_date": bson.M{"$gt": task.StartDate},
+        "start_date": bson.M{"$lt": task.EndDate},
+    }
+    cursor, err := client.Database("taskmanagement").Collection("tasks").Find(context.TODO(), filter)
+    if err != nil {
+        http.Error(w, "Database query error", http.StatusInternalServerError)
+        return
+    }
+    if cursor.All(context.Background(), &overlappingTasks); len(overlappingTasks) > 0 {
+        // Append a warning to the task description indicating overlapping dates
+        task.Description += " Warning: This task overlaps with existing task(s)."
+    }
 
-	task.ID = primitive.NewObjectID()
-	_, err = client.Database("taskmanagement").Collection("tasks").InsertOne(context.TODO(), task)
-	if err != nil {
-		http.Error(w, "Failed to create task", http.StatusInternalServerError)
-		return
-	}
+    task.ID = primitive.NewObjectID()
+    _, err = client.Database("taskmanagement").Collection("tasks").InsertOne(context.TODO(), task)
+    if err != nil {
+        http.Error(w, "Failed to create task", http.StatusInternalServerError)
+        return
+    }
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(task)
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(task)
 }
+
+
+
 
 func getTask(w http.ResponseWriter, req *http.Request) {
 	taskID := req.URL.Path[len("/tasks/get/"):]
