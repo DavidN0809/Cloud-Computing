@@ -48,6 +48,7 @@ func main() {
 	mux.HandleFunc("/tasks/update/", updateTask)
 	mux.HandleFunc("/tasks/remove/", authMiddleware(adminMiddleware(removeTask)))
 	mux.HandleFunc("/tasks/removeAllTasks", removeAllTasks)
+	mux.HandleFunc("/tasks/listByUser/", listTasksByUser)
 
 	// Start the server
 	log.Println("Task Service listening on port 8002...")
@@ -288,6 +289,34 @@ func listTasks(w http.ResponseWriter, req *http.Request) {
 	var tasks []Task
 	err = cursor.All(context.Background(), &tasks)
 	if err != nil {
+		http.Error(w, "Failed to decode tasks", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(tasks)
+}
+
+func listTasksByUser(w http.ResponseWriter, req *http.Request) {
+	userID := req.URL.Path[len("/tasks/listByUser/"):] // Assuming the endpoint is like /tasks/listByUser/<UserID>
+	objectID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		http.Error(w, "Invalid user ID", http.StatusBadRequest)
+		return
+	}
+
+	filter := bson.M{"assigned_to": objectID}
+
+	collection := client.Database("taskmanagement").Collection("tasks")
+	cursor, err := collection.Find(context.TODO(), filter)
+	if err != nil {
+		http.Error(w, "Failed to list tasks", http.StatusInternalServerError)
+		return
+	}
+	defer cursor.Close(context.Background())
+
+	var tasks []Task
+	if err = cursor.All(context.Background(), &tasks); err != nil {
 		http.Error(w, "Failed to decode tasks", http.StatusInternalServerError)
 		return
 	}
