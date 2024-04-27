@@ -64,7 +64,7 @@ export default function SignIn() {
         email: data.get('username'),
         password: data.get('password'),
       });
-      
+      window.location.href = '/dashboard';
       if (response.ok) {
         const result = await response.json();
         console.log('login successful:', result);
@@ -72,7 +72,9 @@ export default function SignIn() {
         setSeverity('success');
         window.location.href = '/dashboard';
       } else {
+        console.log('in else');
         throw new Error('login failed');
+        
         
       }
     } catch (error) {
