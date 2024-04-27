@@ -115,20 +115,28 @@ curl -X DELETE http://localhost:8000/users/delete-all \
 
 ### Create a Task
 ```bash
-curl -X POST http://localhost:8000/tasks/create \
-  -H "Content-Type: application/json" \
-  -d '{
-        "title": "New Task",
-        "description": "Task description",
-        "assigned_to": "<user_id>",
-        "status": "pending",
-        "hours": 5
-      }'
+curl -X POST "http://localhost:8002/tasks/create" \
+     -H "Content-Type: application/json" \
+     -d '{
+         "title": "Project Planning",
+         "description": "Initial planning phase for the project.",
+         "assigned_to": "<AssignedTo>",
+         "status": "planned",
+         "hours": 8,
+         "start_date": "<StartDate>",
+         "end_date": "<EndDate>"
+     }'
+
 ```
 
-### Get a Task
+### Get a Task by task id
 ```bash
 curl -X GET http://localhost:8000/tasks/get/<task_id>
+```
+
+### Get tasks by UserID
+```bash
+curl -X GET "http://localhost:8002/tasks/listByUser/<UserID>"
 ```
 
 ### Update a Task
