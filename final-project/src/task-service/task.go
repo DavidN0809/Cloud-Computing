@@ -12,7 +12,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-    "strconv"
 
 )
 
@@ -116,7 +115,7 @@ type Task struct {
     Description string             `bson:"description" json:"description"`
     AssignedTo  primitive.ObjectID `bson:"assigned_to" json:"assigned_to"`
     Status      string             `bson:"status" json:"status"`
-    Hours       string             `bson:"hours" json:"hours"`
+    Hours       float64             `bson:"hours" json:"hours"`
     StartDate   time.Time          `bson:"start_date" json:"start_date"`
     EndDate     time.Time          `bson:"end_date" json:"end_date"`
     InvoiceID   primitive.ObjectID `bson:"invoice_id,omitempty" json:"invoice_id,omitempty"`
@@ -127,8 +126,8 @@ type Billing struct {
     ID     primitive.ObjectID `bson:"_id" json:"id"`
     UserID primitive.ObjectID `bson:"user_id" json:"user_id"`
     TaskID primitive.ObjectID `bson:"task_id" json:"task_id"`
-    Hours  string             `bson:"hours" json:"hours"`
-    Amount string             `bson:"amount" json:"amount"`
+    Hours  float64             `bson:"hours" json:"hours"`
+    Amount float64             `bson:"amount" json:"amount"`
 }
 
 func createTask(w http.ResponseWriter, req *http.Request) {
@@ -377,20 +376,15 @@ func removeAllTasks(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-const hourlyRate = 100.0
-
 func createInvoiceInBillingService(task Task) (primitive.ObjectID, error) {
-    hours, err := strconv.ParseFloat(task.Hours, 64)
-    if err != nil {
-        log.Printf("Error parsing hours: %v", err)
-        return primitive.NilObjectID, err
-    }
+    hourlyRate := 100.0  // Ensure this is defined or passed correctly
+    amount := task.Hours * hourlyRate
 
     billing := Billing{
         UserID: task.AssignedTo,
         TaskID: task.ID,
         Hours:  task.Hours,
-        Amount: fmt.Sprintf("%.2f", hours*hourlyRate),
+        Amount: amount,
     }
 
     jsonData, err := json.Marshal(billing)
@@ -399,19 +393,25 @@ func createInvoiceInBillingService(task Task) (primitive.ObjectID, error) {
         return primitive.NilObjectID, err
     }
 
-    req, err := http.NewRequest("POST", "http://api-gateway:8000/billings/create", bytes.NewBuffer(jsonData))
+    req, err := http.NewRequest("POST", "http://api-gateway:8000/billings/createForTaskService", bytes.NewBuffer(jsonData))
     if err != nil {
         log.Printf("Error creating request: %v", err)
         return primitive.NilObjectID, err
     }
     req.Header.Set("Content-Type", "application/json")
-    req.Header.Set("X-Task-Service", "your-task-service-secret") // Add the task service header
+    req.Header.Set("X-Task-Service", "your-task-service-secret")
+
+    log.Printf("Sending request to billing service with headers: %+v and body: %s", req.Header, jsonData)
 
     client := &http.Client{}
     resp, err := client.Do(req)
-
-
+    if err != nil {
+        log.Printf("Error sending request to billing service: %v", err)
+        return primitive.NilObjectID, err
+    }
     defer resp.Body.Close()
+
+    log.Printf("Billing service responded with status: %d", resp.StatusCode)
 
     if resp.StatusCode != http.StatusOK {
         log.Printf("Failed to create invoice, billing service responded with status: %d", resp.StatusCode)

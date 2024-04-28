@@ -90,22 +90,3 @@ func isAdmin(req *http.Request) bool {
     return role == "admin"
 }
 
-func taskServiceMiddleware(next http.HandlerFunc) http.HandlerFunc {
-    return func(w http.ResponseWriter, req *http.Request) {
-        // Check if the request is coming from the task service
-        if isTaskService(req) {
-            next(w, req)
-            return
-        }
-
-        // If the request is not from the task service, proceed with the admin middleware
-        adminMiddleware(next)(w, req)
-    }
-}
-
-func isTaskService(req *http.Request) bool {
-    // Check if the request has a specific header or token indicating it's from the task service
-    // For example, you can check for a specific header value
-    taskServiceHeader := req.Header.Get("X-Task-Service")
-    return taskServiceHeader == "your-task-service-secret"
-}
