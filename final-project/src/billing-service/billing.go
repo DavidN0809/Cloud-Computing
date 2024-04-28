@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"strconv"
 	"time"
 
     "go.mongodb.org/mongo-driver/bson"
@@ -44,11 +43,12 @@ func main() {
 
     // Billing endpoints
 mux.Handle("/billings/list", authMiddleware(adminMiddleware(http.HandlerFunc(listBillings))))
-mux.Handle("/billings/create", authMiddleware(taskServiceMiddleware(http.HandlerFunc(createBilling))))
+mux.Handle("/billings/create", authMiddleware(http.HandlerFunc(createBilling)))
 mux.Handle("/billings/get/", authMiddleware(adminMiddleware(http.HandlerFunc(getBilling))))
 mux.Handle("/billings/update/", authMiddleware(adminMiddleware(http.HandlerFunc(updateBilling))))
 mux.Handle("/billings/remove/", authMiddleware(adminMiddleware(http.HandlerFunc(removeBilling))))
 mux.Handle("/billings/removeAllBillings", http.HandlerFunc(removeAllBillings))
+mux.Handle("/billings/createForTaskService", http.HandlerFunc(createBilling))
 
     // Start the server
     log.Println("Billing Service listening on port 8003...")
@@ -112,43 +112,36 @@ type Billing struct {
 	ID     primitive.ObjectID `bson:"_id" json:"id"`
 	UserID primitive.ObjectID `bson:"user_id" json:"user_id"`
 	TaskID primitive.ObjectID `bson:"task_id" json:"task_id"`
-	Hours  string             `bson:"hours" json:"hours"`
-	Amount string             `bson:"amount" json:"amount"`
+	Hours  float64             `bson:"hours" json:"hours"`
+	Amount float64             `bson:"amount" json:"amount"`
 }
 
 func createBilling(w http.ResponseWriter, req *http.Request) {
-	if req.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
+    if req.Method != http.MethodPost {
+        http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+        return
+    }
 
-	var billing Billing
-	err := json.NewDecoder(req.Body).Decode(&billing)
-	if err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
+    var billing Billing
+    err := json.NewDecoder(req.Body).Decode(&billing)
+    if err != nil {
+        http.Error(w, "Invalid request body", http.StatusBadRequest)
+        return
+    }
 
-	// Parse hours and calculate the amount
-	hours, err := strconv.ParseFloat(billing.Hours, 64)
-	if err != nil {
-		http.Error(w, "Invalid hours format", http.StatusBadRequest)
-		return
-	}
-	hourlyRate := 100.0 // Adjust this value as necessary
-	amount := hours * hourlyRate
-	billing.Amount = strconv.FormatFloat(amount, 'f', 2, 64)
+    hourlyRate := 100.0 // Adjust this value as necessary
+    billing.Amount = float64(billing.Hours) * hourlyRate
 
-	collection := client.Database("billing").Collection("billings")
-	billing.ID = primitive.NewObjectID()
-	_, err = collection.InsertOne(context.TODO(), billing)
-	if err != nil {
-		http.Error(w, "Failed to create billing", http.StatusInternalServerError)
-		return
-	}
+    collection := client.Database("billing").Collection("billings")
+    billing.ID = primitive.NewObjectID()
+    _, err = collection.InsertOne(context.TODO(), billing)
+    if err != nil {
+        http.Error(w, "Failed to create billing", http.StatusInternalServerError)
+        return
+    }
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(billing)
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(billing)
 }
 
 func getBilling(w http.ResponseWriter, req *http.Request) {
