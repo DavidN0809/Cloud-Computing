@@ -42,13 +42,13 @@ func main() {
 	mux := http.NewServeMux()
 
 	// User endpoints
-	mux.HandleFunc("/users/list",  authMiddleware(adminMiddleware(listUsers)))
-	mux.HandleFunc("/users/create", createUser)
-	mux.HandleFunc("/users/get/",  authMiddleware(adminMiddleware(getUser)))
-	mux.HandleFunc("/users/update/",  authMiddleware(adminMiddleware(updateUser)))
-        mux.HandleFunc("/users/remove/", authMiddleware(adminMiddleware(removeUser)))
-	mux.HandleFunc("/users/delete-all", deleteAllUsers)
-        mux.HandleFunc("/users/login", loginUser)
+	mux.Handle("/users/list", corsMiddleware(authMiddleware(adminMiddleware(http.HandlerFunc(listUsers)))))
+	mux.Handle("/users/create", corsMiddleware(http.HandlerFunc(createUser)))
+	mux.Handle("/users/get/", corsMiddleware(authMiddleware(adminMiddleware(http.HandlerFunc(getUser)))))
+	mux.Handle("/users/update/", corsMiddleware(authMiddleware(adminMiddleware(http.HandlerFunc(updateUser)))))
+	mux.Handle("/users/remove/", corsMiddleware(authMiddleware(adminMiddleware(http.HandlerFunc(removeUser)))))
+	mux.Handle("/users/delete-all", corsMiddleware(http.HandlerFunc(deleteAllUsers)))
+	mux.Handle("/users/login", corsMiddleware(http.HandlerFunc(loginUser)))
 
 	// Start the server
 	log.Println("User Service listening on port 8001...")

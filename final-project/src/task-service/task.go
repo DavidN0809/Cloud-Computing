@@ -41,19 +41,38 @@ func main() {
 	// Create a new HTTP server
 	mux := http.NewServeMux()
 
-	// Task endpoints
-	mux.HandleFunc("/tasks/list", listTasks)
-	mux.HandleFunc("/tasks/create", createTask)
-	mux.HandleFunc("/tasks/get/", getTask)
-	mux.HandleFunc("/tasks/update/", updateTask)
-	mux.HandleFunc("/tasks/remove/", authMiddleware(adminMiddleware(removeTask)))
-	mux.HandleFunc("/tasks/removeAllTasks", removeAllTasks)
-	mux.HandleFunc("/tasks/listByUser/", listTasksByUser)
+	mux.Handle("/tasks/list", corsMiddleware(http.HandlerFunc(listTasks)))
+	mux.Handle("/tasks/create", corsMiddleware(http.HandlerFunc(createTask)))
+	mux.Handle("/tasks/get/", corsMiddleware(http.HandlerFunc(getTask)))
+	mux.Handle("/tasks/update/", corsMiddleware(http.HandlerFunc(updateTask)))
+	mux.Handle("/tasks/remove/", corsMiddleware(authMiddleware(adminMiddleware(http.HandlerFunc(removeTask)))))
+	mux.Handle("/tasks/removeAllTasks", corsMiddleware(http.HandlerFunc(removeAllTasks)))
+	mux.Handle("/tasks/listByUser/", corsMiddleware(http.HandlerFunc(listTasksByUser)))
 
 	// Start the server
 	log.Println("Task Service listening on port 8002...")
 	log.Fatal(http.ListenAndServe(":8002", mux))
 }
+
+
+func corsMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Set CORS headers
+		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000") // Update with your frontend URL
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
+
+		// Handle preflight requests
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
 
 func ensureDatabaseAndCollection(client *mongo.Client) error {
 	dbName := "taskmanagement"
