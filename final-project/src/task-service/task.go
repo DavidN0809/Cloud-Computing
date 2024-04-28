@@ -131,12 +131,17 @@ type Billing struct {
 }
 
 func createTask(w http.ResponseWriter, req *http.Request) {
+    log.Println("Starting to create task")  // Log the start of the operation
+
     var task Task
     err := json.NewDecoder(req.Body).Decode(&task)
     if err != nil {
         http.Error(w, "Invalid request body", http.StatusBadRequest)
         return
     }
+
+    log.Printf("Attempting to insert task: %+v", task)  // Log the task details being inserted
+
 
     // Check for overlapping tasks
     var overlappingTasks []Task
@@ -162,9 +167,9 @@ func createTask(w http.ResponseWriter, req *http.Request) {
         return
     }
 
+    log.Printf("Task created successfully: %+v", task)  // Confirm successful creation
     w.Header().Set("Content-Type", "application/json")
     json.NewEncoder(w).Encode(task)
-	log.Printf("Task created successfully: %+v", task)
 }
 
 
@@ -172,7 +177,8 @@ func createTask(w http.ResponseWriter, req *http.Request) {
 
 func getTask(w http.ResponseWriter, req *http.Request) {
 	taskID := req.URL.Path[len("/tasks/get/"):]
-	objectID, err := primitive.ObjectIDFromHex(taskID)
+        log.Println("Received request to get task")  // Log the receipt of the request
+        objectID, err := primitive.ObjectIDFromHex(taskID)
 	if err != nil {
 		http.Error(w, "Invalid task ID", http.StatusBadRequest)
 		return
@@ -184,6 +190,8 @@ func getTask(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "Task not found", http.StatusNotFound)
 		return
 	}
+
+        log.Printf("Attempting to get task with ID: %s", taskID)  // Log the task ID being retrieved
 
 	var subtasks []Task
 	cursor, err := client.Database("taskmanagement").Collection("tasks").Find(context.TODO(), bson.M{"parent_task": objectID})
@@ -199,12 +207,15 @@ func getTask(w http.ResponseWriter, req *http.Request) {
 		Task:     task,
 		Subtasks: subtasks,
 	}
+        log.Printf("Task retrieved successfully: %+v", task)  // Confirm the task was retrieved successfully
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }
 
 func updateTask(w http.ResponseWriter, req *http.Request) {
+       log.Println("Received request to update task")  // Log the start of an update request
+
 	if req.Method != http.MethodPut {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -216,6 +227,8 @@ func updateTask(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "Invalid task ID", http.StatusBadRequest)
 		return
 	}
+
+       log.Printf("Attempting to update task with ID: %s", taskID)  // Log the task ID being updated
 
 	var updates map[string]interface{}
 	err = json.NewDecoder(req.Body).Decode(&updates)
@@ -279,11 +292,12 @@ if currentTask.Status != "done" && updates["status"] == "done" {
 		http.Error(w, "Failed to update task", http.StatusInternalServerError)
 		return
 	}
-
+        log.Printf("Task updated successfully: ID %s", taskID)  // Confirm successful update
 	w.WriteHeader(http.StatusNoContent)
 }
 
 func removeTask(w http.ResponseWriter, req *http.Request) {
+
 	if req.Method != http.MethodDelete {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -291,6 +305,7 @@ func removeTask(w http.ResponseWriter, req *http.Request) {
 
 	taskID := req.URL.Path[len("/tasks/remove/"):]
 	objectID, err := primitive.ObjectIDFromHex(taskID)
+        log.Printf("Task retrieved successfully: %+v", taskID)  // Confirm the task was retrie>
 	if err != nil {
 		http.Error(w, "Invalid task ID", http.StatusBadRequest)
 		return
@@ -309,6 +324,8 @@ func removeTask(w http.ResponseWriter, req *http.Request) {
 }
 
 func listTasks(w http.ResponseWriter, req *http.Request) {
+       log.Println("Received request to list all tasks")  // Log the receipt of the request
+
 	if req.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -328,14 +345,16 @@ func listTasks(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "Failed to decode tasks", http.StatusInternalServerError)
 		return
 	}
-
+    log.Println("Tasks listed successfully")  // Confirm successful operation
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(tasks)
 }
 
 func listTasksByUser(w http.ResponseWriter, req *http.Request) {
 	userID := req.URL.Path[len("/tasks/listByUser/"):] // Assuming the endpoint is like /tasks/listByUser/<UserID>
-	objectID, err := primitive.ObjectIDFromHex(userID)
+        log.Printf("Received request to list tasks for user ID: %s", userID)  // Log the user ID being queried
+
+        objectID, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
 		http.Error(w, "Invalid user ID", http.StatusBadRequest)
 		return
@@ -356,12 +375,13 @@ func listTasksByUser(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "Failed to decode tasks", http.StatusInternalServerError)
 		return
 	}
-
+    log.Printf("Tasks for user ID %s listed successfully", userID)  // Confirm successful operation
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(tasks)
 }
 
 func removeAllTasks(w http.ResponseWriter, req *http.Request) {
+    log.Println("Received request to remove all tasks")  // Log the start of the operation
 	if req.Method != http.MethodDelete {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -374,11 +394,14 @@ func removeAllTasks(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, "Failed to remove all tasks", http.StatusInternalServerError)
 		return
 	}
+    log.Printf("All tasks removed successfully, count: %d")  // Confirm successful deletion
+    w.WriteHeader(http.StatusNoContent)
 }
 
 func createInvoiceInBillingService(task Task) (primitive.ObjectID, error) {
     hourlyRate := 100.0  // Ensure this is defined or passed correctly
     amount := task.Hours * hourlyRate
+    log.Printf("Attempting to create invoice for task ID: %s", task.ID.Hex())  // Log the task ID for which invoice is being created
 
     billing := Billing{
         UserID: task.AssignedTo,
@@ -424,5 +447,6 @@ func createInvoiceInBillingService(task Task) (primitive.ObjectID, error) {
         return primitive.NilObjectID, err
     }
 
+    log.Printf("Invoice created successfully for task ID: %s, Billing ID: %s", task.ID.Hex(), createdBilling.ID.Hex())  // Confirm successful invoice creation
     return createdBilling.ID, nil
 }

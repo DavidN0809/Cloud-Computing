@@ -118,7 +118,8 @@ type User struct {
 
 
 func createUser(w http.ResponseWriter, req *http.Request) {
- 
+    log.Println("Starting to create user")  // Log the start of the operation
+
     var user User
     err := json.NewDecoder(req.Body).Decode(&user)
     if err != nil {
@@ -132,7 +133,7 @@ func createUser(w http.ResponseWriter, req *http.Request) {
         user.Role = "regular"
     }
 
-    log.Printf("Creating user: %+v", user)
+    log.Printf("Attempting to insert user: %+v", user)  // Log the user details being inserted
 
     collection := client.Database("user").Collection("users")
     user.ID = primitive.NewObjectID()
@@ -246,7 +247,7 @@ func getUser(w http.ResponseWriter, req *http.Request) {
 	log.Printf("User found: %+v", user)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-       json.NewEncoder(w).Encode(user)
+        json.NewEncoder(w).Encode(user)
 }
 
 func updateUser(w http.ResponseWriter, req *http.Request) {

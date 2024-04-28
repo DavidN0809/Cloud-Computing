@@ -117,6 +117,8 @@ type Billing struct {
 }
 
 func createBilling(w http.ResponseWriter, req *http.Request) {
+    log.Println("Received request to create billing")  // Log the start of the operation
+
     if req.Method != http.MethodPost {
         http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
         return
@@ -139,7 +141,7 @@ func createBilling(w http.ResponseWriter, req *http.Request) {
         http.Error(w, "Failed to create billing", http.StatusInternalServerError)
         return
     }
-
+    log.Printf("Billing created successfully: %+v", billing)  // Confirm successful creation
     w.Header().Set("Content-Type", "application/json")
     json.NewEncoder(w).Encode(billing)
 }
@@ -151,6 +153,7 @@ func getBilling(w http.ResponseWriter, req *http.Request) {
     }
 
     billingID := req.URL.Path[len("/billings/get/"):]
+    log.Printf("Received request to get billing with ID: %s", billingID)  // Log the billing ID being queried
     objectID, err := primitive.ObjectIDFromHex(billingID)
     if err != nil {
         http.Error(w, "Invalid billing ID", http.StatusBadRequest)
@@ -167,6 +170,8 @@ func getBilling(w http.ResponseWriter, req *http.Request) {
         return
     }
 
+
+    log.Printf("Billing retrieved successfully: %+v", billing)  // Confirm successful retrieval
     w.Header().Set("Content-Type", "application/json")
     json.NewEncoder(w).Encode(billing)
 }
@@ -183,6 +188,7 @@ func updateBilling(w http.ResponseWriter, req *http.Request) {
         http.Error(w, "Invalid billing ID", http.StatusBadRequest)
         return
     }
+    log.Printf("Received request to update billing with ID: %s", billingID)  // Log the billing ID
 
     var billing Billing
     err = json.NewDecoder(req.Body).Decode(&billing)
@@ -205,11 +211,13 @@ func updateBilling(w http.ResponseWriter, req *http.Request) {
         http.Error(w, "Failed to update billing", http.StatusInternalServerError)
         return
     }
-
+    log.Println("Billing updated successfully")  // Confirm successful update
     w.WriteHeader(http.StatusNoContent)
 }
 
 func removeBilling(w http.ResponseWriter, req *http.Request) {
+    log.Println("Received request to remove all billings")  // Log the start of the operation
+
     if req.Method != http.MethodDelete {
         http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
         return
@@ -230,12 +238,14 @@ func removeBilling(w http.ResponseWriter, req *http.Request) {
         http.Error(w, "Failed to remove billing", http.StatusInternalServerError)
         return
     }
-
+    log.Println("Billing removed successfully")  // Confirm successful update
     w.WriteHeader(http.StatusNoContent)
 }
 
 func listBillings(w http.ResponseWriter, req *http.Request) {
-    if req.Method != http.MethodGet {
+   log.Println("Recieved request to list billing") 
+
+   if req.Method != http.MethodGet {
         http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
         return
     }
@@ -255,12 +265,14 @@ func listBillings(w http.ResponseWriter, req *http.Request) {
         return
     }
 
+    log.Println("Billings listed successfully")  // Confirm successful operation
     w.Header().Set("Content-Type", "application/json")
     json.NewEncoder(w).Encode(billings)
 }
 
 
 func removeAllBillings(w http.ResponseWriter, req *http.Request) {
+    log.Println("Received request to remove all billings")  // Log the start of the operation
     if req.Method != http.MethodDelete {
         http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
         return
@@ -274,5 +286,6 @@ func removeAllBillings(w http.ResponseWriter, req *http.Request) {
         return
     }
 
+    log.Printf("All billings removed successfully, count: %d")  // Log the count of billings removed
     w.WriteHeader(http.StatusNoContent)
 }
