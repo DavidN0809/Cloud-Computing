@@ -19,9 +19,10 @@ import Link from '@mui/material/Link';
 import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import NotificationsIcon from '@mui/icons-material/Notifications';
-import { mainListItems, secondaryListItems } from '@/components/Dashboard/listItems';
+import { mainListItems, secondaryListItems } from '@/components/Dashboard/overall/listItems';
 import TaskAction from '@/components/Dashboard/task/TaskAction';
 import ListAllTasks from '@/components/Dashboard/task/ListAllTasks'
+import SearchComponent from '@/components/Dashboard/task/SearchComponent'
 
 import { useSearchParams  } from 'next/navigation';
 
