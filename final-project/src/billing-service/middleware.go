@@ -89,3 +89,4 @@ func isAdmin(req *http.Request) bool {
     role := req.Context().Value("role")
     return role == "admin"
 }
+
