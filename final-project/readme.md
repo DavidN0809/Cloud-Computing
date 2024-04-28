@@ -114,7 +114,7 @@ curl -X DELETE http://localhost:8000/users/delete-all
 
 ### Create a Parent Task
 ```bash
-curl -X POST "http://localhost:8002/tasks/create" \
+curl -X POST "http://localhost:8000/tasks/create" \
      -H "Content-Type: application/json" \
      -d '{
          "title": "Project Planning",
