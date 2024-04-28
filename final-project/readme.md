@@ -156,27 +156,29 @@ curl -X GET "http://localhost:8000/tasks/listByUser/<UserID>"
 
 ### Update a Parent Task
 ```bash
-curl -X PUT http://localhost:8000/tasks/update/<task_id> \
-  -H "Content-Type: application/json" \
-  -d '{
-        "title": "Task 1 Updated",
-        "description": "Updated task description",
-        "assigned_to": "<user_id>",
-        "status": "in progress",
-        "hours": 8
-      }'
-```
-
-### Update a Child/Convert to Child Task
-#### Only requires task id field
-```
 curl -X PUT "http://localhost:8000/tasks/update/<task_id>" \
      -H "Content-Type: application/json" \
      -d '{
            "title": "Comprehensive Updated Title",
            "description": "Comprehensive updated description.",
            "assigned_to": "<User id>",
-           "status": "completed",
+           "status": "done",
+           "hours": 4.5,
+           "start_date": "2024-06-02T09:00:00Z",
+           "end_date": "2024-06-02T12:00:00Z"
+         }'
+```
+
+### Update a Child/Convert to Child Task
+#### Only requires task id field
+```bash
+curl -X PUT "http://localhost:8000/tasks/update/<task_id>" \
+     -H "Content-Type: application/json" \
+     -d '{
+           "title": "Comprehensive Updated Title",
+           "description": "Comprehensive updated description.",
+           "assigned_to": "<User id>",
+           "status": "done",
            "hours": 4.5,
            "start_date": "2024-06-02T09:00:00Z",
            "end_date": "2024-06-02T12:00:00Z",
