@@ -40,7 +40,11 @@ func corsMiddleware(next http.Handler) http.Handler {
     return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
         // Allow all origins for testing purposes
         origin := r.Header.Get("Origin")
-        w.Header().Set("Access-Control-Allow-Origin", origin)
+
+        // Check if the CORS headers are already set
+        if w.Header().Get("Access-Control-Allow-Origin") == "" {
+            w.Header().Set("Access-Control-Allow-Origin", origin)
+        }
         w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
         w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
         w.Header().Set("Access-Control-Allow-Credentials", "true")
@@ -54,6 +58,7 @@ func corsMiddleware(next http.Handler) http.Handler {
         next.ServeHTTP(w, r)
     })
 }
+
 
 func handleRegister(w http.ResponseWriter, r *http.Request) {
     var user struct {
