@@ -113,7 +113,7 @@ curl -X DELETE http://localhost:8000/users/delete-all \
 
 ## CRUD Operations for Tasks
 
-### Create a Task
+### Create a Parent Task
 ```bash
 curl -X POST "http://localhost:8002/tasks/create" \
      -H "Content-Type: application/json" \
@@ -129,6 +129,22 @@ curl -X POST "http://localhost:8002/tasks/create" \
 
 ```
 
+### Create a Child Task
+```
+curl -X POST "http://localhost:8000/tasks/create" \
+     -H "Content-Type: application/json" \
+     -d '{
+           "title": "Example Child Task",
+           "description": "This task is a child of another task.",
+           "assigned_to": "<AssignedTo>",
+           "status": "pending",
+           "hours": 3,
+           "start_date": "2024-06-01T09:00:00Z",
+           "end_date": "2024-06-01T12:00:00Z",
+           "parent_task": "<Parent Task ID>"
+         }'
+
+```
 ### Get a Task by task id
 ```bash
 curl -X GET http://localhost:8000/tasks/get/<task_id>
@@ -139,7 +155,7 @@ curl -X GET http://localhost:8000/tasks/get/<task_id>
 curl -X GET "http://localhost:8000/tasks/listByUser/<UserID>"
 ```
 
-### Update a Task
+### Update a Parent Task
 ```bash
 curl -X PUT http://localhost:8000/tasks/update/<task_id> \
   -H "Content-Type: application/json" \
@@ -150,6 +166,23 @@ curl -X PUT http://localhost:8000/tasks/update/<task_id> \
         "status": "in progress",
         "hours": 8
       }'
+```
+
+### Update a Child/Convert to Child Task
+#### Only requires task id field
+```
+curl -X PUT "http://localhost:8000/tasks/update/<task_id>" \
+     -H "Content-Type: application/json" \
+     -d '{
+           "title": "Comprehensive Updated Title",
+           "description": "Comprehensive updated description.",
+           "assigned_to": "<User id>",
+           "status": "completed",
+           "hours": 4.5,
+           "start_date": "2024-06-02T09:00:00Z",
+           "end_date": "2024-06-02T12:00:00Z",
+           "parent_task": "<parent id/new parent id>"
+         }'
 ```
 
 ### Remove a Task (Admin only)
@@ -229,36 +262,6 @@ This operation should only succeed with admin privileges.
 ```bash
 curl -X DELETE http://localhost:8000/billings/removeAllBillings \
       -H 'Authorization: Bearer <admin_token>' 
-```
-
-### Create a Parent Task
-```bash
-curl -X POST http://localhost:8000/tasks/create \
--H "Content-Type: application/json" \
--d '{"title": "Parent Task", "description": "This is a parent task.", "assigned_to": "<Assignee_ObjectID>", "status": "open", "hours": 0}'
-
-```
-
-### Create a Child Task
-```bash
-curl -X POST http://localhost:8000/tasks/create \
--H "Content-Type: application/json" \
--d '{"title": "Child Task", "description": "This is a child task.", "assigned_to": "<Assignee_ObjectID>", "status": "open", "hours": 0, "parent_task": "<ParentTask_ObjectID>"}'
-
-```
-
-### Update the Child Task
-```bash
-curl -X PUT http://localhost:8000/tasks/update/<ChildTask_ObjectID> \
--H "Content-Type: application/json" \
--d '{"status": "done", "hours": 8}'
-
-```
-
-### Verify the Update
-```bash
-curl -X GET http://localhost:8000/tasks/get/<ChildTask_ObjectID>
-
 ```
 
 
