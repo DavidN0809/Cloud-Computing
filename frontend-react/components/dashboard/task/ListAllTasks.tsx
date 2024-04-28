@@ -22,6 +22,7 @@ import FilterListIcon from '@mui/icons-material/FilterList';
 import { visuallyHidden } from '@mui/utils';
 
 interface Data {
+  id:number;
   title: string;
   description: string;
   assigned_to: string;
@@ -32,6 +33,7 @@ interface Data {
 }
 
 function createData(
+  id:number,
   title: string,
   description: string,
   assigned_to: string,
@@ -41,6 +43,7 @@ function createData(
   end_date: Date
 ): Data {
   return {
+    id,
     title,
     description,
     assigned_to,
@@ -58,7 +61,7 @@ const simuJson = '[{"id":"662dcf5c418cb57c6592dfe8","title":"Project Planning","
 
 
 const rows = [
-  createData("Project Planning",
+  createData(200,"Project Planning",
   "Initial planning phase for the project.",
   "<AssignedTo>",
   "planned",
@@ -69,6 +72,10 @@ const rows = [
 ];
 
 function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
+  if (orderBy === 'start_date' || orderBy === 'end_date') {
+    // Convert dates to timestamps for comparison
+    return (b[orderBy] as Date).getTime() - (a[orderBy] as Date).getTime();
+  }
   if (b[orderBy] < a[orderBy]) {
     return -1;
   }
@@ -84,8 +91,8 @@ function getComparator<Key extends keyof any>(
   order: Order,
   orderBy: Key,
 ): (
-  a: { [key in Key]: number | string },
-  b: { [key in Key]: number | string },
+  a: { [key in Key]: number | string | Date},
+  b: { [key in Key]: number | string | Date},
 ) => number {
   return order === 'desc'
     ? (a, b) => descendingComparator(a, b, orderBy)
