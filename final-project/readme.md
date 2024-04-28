@@ -194,9 +194,10 @@ curl -X DELETE http://localhost:8000/tasks/remove/<task_id> \
 
 ```
 
-### List All Tasks
+### List All Tasks (Admin only)
 ```bash
-curl -X GET http://localhost:8000/tasks/list
+curl -X GET http://localhost:8000/tasks/list \
+      -H 'Authorization: Bearer <admin_token>' 
 ```
 
 ### Delete All Tasks (testing only)
