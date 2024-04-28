@@ -94,6 +94,7 @@ export default function TaskAction() {
     try {
       const response = await fetch('http://localhost:8002/tasks/create', {
         method: 'POST',
+        mode:"no-cors",
         headers: {
           'Content-Type': 'application/json'
         },
@@ -152,31 +153,7 @@ export default function TaskAction() {
             </Dialog>
           </Grid>
 
-          <Grid item md={6} display="flex" justifyContent="center">
-            <Button variant="outlined" color="primary" onClick={handleClickOpen}>
-              Update Task
-            </Button>
-            <Dialog open={open} onClose={handleClose}>
-              <DialogTitle>Upadte Task</DialogTitle>
-              <DialogContent>
-                <TextField autoFocus margin="dense" id="title" label="Task Name" type="text" fullWidth variant="standard" value={title} onChange={(e) => setTitle(e.target.value)} />
-                <TextField margin="dense" id="description" label="Task Description" type="text" fullWidth multiline variant="standard" value={description} onChange={(e) => setDescription(e.target.value)} />
-                <TextField margin="dense" id="assigned_to" label="Assigned To" type="text" fullWidth variant="standard" value={assignedTo} onChange={(e) => setAssignedTo(e.target.value)} />
-                <TextField margin="dense" id="status" label="Status" type="text" fullWidth variant="standard" value={status} onChange={(e) => setStatus(e.target.value)} />
-                <TextField margin="dense" id="hours" label="Hours" type="number" fullWidth variant="standard" value={hours} onChange={(e) => setHours(e.target.value)} />
-                <TextField margin="dense" id="start_date" label="start date" type="number" fullWidth variant="standard" value={start_date} onChange={(e) => setStartDate(e.target.value)} />
-                <TextField margin="dense" id="end_date" label="end date" type="number" fullWidth variant="standard" value={end_date} onChange={(e) => setEndDate(e.target.value)} />
-              </DialogContent>
-              <DialogActions>
-                <Button onClick={handleClose} color="secondary">
-                  Cancel
-                </Button>
-                <Button onClick={handleUpdate} color="primary">
-                  Update
-                </Button>
-              </DialogActions>
-            </Dialog>
-          </Grid>
+          
         </Grid>
       </Container>
     </React.Fragment>
