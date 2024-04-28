@@ -19,10 +19,10 @@ import Link from '@mui/material/Link';
 import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import NotificationsIcon from '@mui/icons-material/Notifications';
-import { mainListItems, secondaryListItems } from '@/components/Dashboard/listItems';
-import Chart from '@/components/Dashboard/Chart';
-import Deposits from '@/components/Dashboard/Deposits';
-import Orders from '@/components/Dashboard/Orders';
+import { mainListItems, secondaryListItems } from '@/components/Dashboard/overall/listItems';
+import Chart from '@/components/Dashboard/overall/Chart';
+import Deposits from '@/components/Dashboard/overall/Deposits';
+import Orders from '@/components/Dashboard/overall/Orders';
 
 function Copyright(props: any) {
   return (
