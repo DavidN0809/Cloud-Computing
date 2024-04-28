@@ -116,6 +116,7 @@ type User struct {
         Role     string             `bson:"role" json:"role"`
 }
 
+
 func createUser(w http.ResponseWriter, req *http.Request) {
     var user User
     err := json.NewDecoder(req.Body).Decode(&user)
@@ -157,6 +158,8 @@ func createUser(w http.ResponseWriter, req *http.Request) {
     w.WriteHeader(http.StatusCreated) // Set status to 201 Created
     json.NewEncoder(w).Encode(user)
 }
+
+
 
 func loginUser(w http.ResponseWriter, req *http.Request) {
     log.Println("Received request to login user")
