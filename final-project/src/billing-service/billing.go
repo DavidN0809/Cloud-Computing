@@ -1,11 +1,11 @@
 package main
 
 import (
-    "context"
-    "encoding/json"
-    "log"
-    "net/http"
-    "time"
+	"context"
+	"encoding/json"
+	"log"
+	"net/http"
+	"time"
 
     "go.mongodb.org/mongo-driver/bson"
     "go.mongodb.org/mongo-driver/bson/primitive"
@@ -42,13 +42,13 @@ func main() {
     mux := http.NewServeMux()
 
     // Billing endpoints
-// Billing endpoints
 mux.Handle("/billings/list", authMiddleware(adminMiddleware(http.HandlerFunc(listBillings))))
-mux.Handle("/billings/create", authMiddleware(adminMiddleware(http.HandlerFunc(createBilling))))
+mux.Handle("/billings/create", authMiddleware(http.HandlerFunc(createBilling)))
 mux.Handle("/billings/get/", authMiddleware(adminMiddleware(http.HandlerFunc(getBilling))))
 mux.Handle("/billings/update/", authMiddleware(adminMiddleware(http.HandlerFunc(updateBilling))))
 mux.Handle("/billings/remove/", authMiddleware(adminMiddleware(http.HandlerFunc(removeBilling))))
 mux.Handle("/billings/removeAllBillings", http.HandlerFunc(removeAllBillings))
+mux.Handle("/billings/createForTaskService", http.HandlerFunc(createBilling))
 
     // Start the server
     log.Println("Billing Service listening on port 8003...")
@@ -107,12 +107,13 @@ func ensureDatabaseAndCollection(client *mongo.Client) error {
     return nil
 }
 
+
 type Billing struct {
-    ID     primitive.ObjectID `bson:"_id" json:"id"`
-    UserID primitive.ObjectID `bson:"user_id" json:"user_id"`
-    TaskID primitive.ObjectID `bson:"task_id" json:"task_id"`
-    Hours  float64            `bson:"hours" json:"hours"`
-    Amount float64            `bson:"amount" json:"amount"`
+	ID     primitive.ObjectID `bson:"_id" json:"id"`
+	UserID primitive.ObjectID `bson:"user_id" json:"user_id"`
+	TaskID primitive.ObjectID `bson:"task_id" json:"task_id"`
+	Hours  float64             `bson:"hours" json:"hours"`
+	Amount float64             `bson:"amount" json:"amount"`
 }
 
 func createBilling(w http.ResponseWriter, req *http.Request) {
@@ -127,6 +128,9 @@ func createBilling(w http.ResponseWriter, req *http.Request) {
         http.Error(w, "Invalid request body", http.StatusBadRequest)
         return
     }
+
+    hourlyRate := 100.0 // Adjust this value as necessary
+    billing.Amount = float64(billing.Hours) * hourlyRate
 
     collection := client.Database("billing").Collection("billings")
     billing.ID = primitive.NewObjectID()
@@ -204,7 +208,6 @@ func updateBilling(w http.ResponseWriter, req *http.Request) {
 
     w.WriteHeader(http.StatusNoContent)
 }
-
 
 func removeBilling(w http.ResponseWriter, req *http.Request) {
     if req.Method != http.MethodDelete {
