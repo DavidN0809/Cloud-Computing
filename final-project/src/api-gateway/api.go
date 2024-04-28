@@ -41,7 +41,7 @@ func corsMiddleware(h http.Handler) http.Handler {
         // Specify the domain of your front-end app
         origin := r.Header.Get("Origin")
         allowedOrigins := map[string]bool{
-            "http://localhost:3000": true,
+            "http://localhost:8000": true,
         }
 
         // Check if the origin is in the allowed list
