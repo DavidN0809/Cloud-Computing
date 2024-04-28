@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useEffect, useState } from 'react';
 import { alpha } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import Table from '@mui/material/Table';
@@ -60,16 +61,16 @@ const simuJson = '[{"id":"662dcf5c418cb57c6592dfe8","title":"Project Planning","
 
 
 
-const rows = [
-  createData(200,"Project Planning",
-  "Initial planning phase for the project.",
-  "<AssignedTo>",
-  "planned",
-  8,
-  exStartdate,
-  exEnddate),
+// const rows = [
+//   createData(200,"Project Planning",
+//   "Initial planning phase for the project.",
+//   "<AssignedTo>",
+//   "planned",
+//   8,
+//   exStartdate,
+//   exEnddate),
  
-];
+// ];
 
 function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
   if (orderBy === 'start_date' || orderBy === 'end_date') {
@@ -284,6 +285,48 @@ export default function ListAllTasks() {
   const [page, setPage] = React.useState(0);
   const [dense, setDense] = React.useState(false);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
+  const [rows, setRows] = useState<Data[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  useEffect(() => {
+    const fetchTasks = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch('http://localhost:8000/tasks/list');
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        console.log(data)
+        const tasks: Data[] = data.map((task: Data) => 
+          createData(
+            task.id,
+            task.title,
+            task.description,
+            task.assigned_to,
+            task.status,
+            task.hours,
+            new Date(task.start_date),
+            new Date(task.end_date)
+          )
+        );
+        setRows(tasks);
+      } catch (error) {
+        if (error instanceof Error) {
+          // Make sure the caught error is an instance of Error before setting it
+          setError(error);
+        } else {
+          // Otherwise, set a generic error
+          setError(new Error('An unknown error occurred'));
+        }
+      }
+      setLoading(false);
+    };
+
+    fetchTasks();
+  }, []);
+
 
   const handleRequestSort = (
     event: React.MouseEvent<unknown>,
@@ -305,7 +348,7 @@ export default function ListAllTasks() {
 
   const handleClick = (event: React.MouseEvent<unknown>, id: number) => {
     const selectedIndex = selected.indexOf(id);
-    let newSelected: readonly number[] = [];
+    let newSelected: number[] = [];
 
     if (selectedIndex === -1) {
       newSelected = newSelected.concat(selected, id);
@@ -341,99 +384,105 @@ export default function ListAllTasks() {
   const emptyRows =
     page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
 
-  const visibleRows = React.useMemo(
-    () =>
-      stableSort(rows, getComparator(order, orderBy)).slice(
+    const visibleRows = React.useMemo(
+      () => stableSort(rows, getComparator(order, orderBy)).slice(
         page * rowsPerPage,
         page * rowsPerPage + rowsPerPage,
       ),
-    [order, orderBy, page, rowsPerPage],
-  );
+      [rows, order, orderBy, page, rowsPerPage], // Include 'rows' in dependencies
+    );
+    
 
   return (
     <Box sx={{ width: '100%' }}>
-      <Paper sx={{ width: '100%', mb: 2 }}>
-        <EnhancedTableToolbar numSelected={selected.length} />
-        <TableContainer>
-          <Table
-            sx={{ minWidth: 750 }}
-            aria-labelledby="tableTitle"
-            size={dense ? 'small' : 'medium'}
-          >
-            <EnhancedTableHead
-              numSelected={selected.length}
-              order={order}
-              orderBy={orderBy}
-              onSelectAllClick={handleSelectAllClick}
-              onRequestSort={handleRequestSort}
-              rowCount={rows.length}
-            />
-            <TableBody>
-              {visibleRows.map((row, index) => {
-                const isItemSelected = isSelected(row.id);
-                const labelId = `enhanced-table-checkbox-${index}`;
+      {loading ? (
+        <Typography>Loading...</Typography>
+      ) : error ? (
+        <Typography color="error">Error: {error.message}</Typography>
+      ) : (
+        <Paper sx={{ width: '100%', mb: 2 }}>
+          <EnhancedTableToolbar numSelected={selected.length} />
+          <TableContainer>
+            <Table
+              sx={{ minWidth: 750 }}
+              aria-labelledby="tableTitle"
+              size={dense ? 'small' : 'medium'}
+            >
+              <EnhancedTableHead
+                numSelected={selected.length}
+                order={order}
+                orderBy={orderBy}
+                onSelectAllClick={handleSelectAllClick}
+                onRequestSort={handleRequestSort}
+                rowCount={rows.length}
+              />
+              <TableBody>
+                {visibleRows.map((row, index) => {
+                  const isItemSelected = isSelected(row.id);
+                  const labelId = `enhanced-table-checkbox-${index}`;
 
-                return (
-                  <TableRow
-                    hover
-                    onClick={(event) => handleClick(event, row.id)}
-                    role="checkbox"
-                    aria-checked={isItemSelected}
-                    tabIndex={-1}
-                    key={row.id}
-                    selected={isItemSelected}
-                    sx={{ cursor: 'pointer' }}
-                  >
-                    <TableCell padding="checkbox">
-                      <Checkbox
-                        color="primary"
-                        checked={isItemSelected}
-                        inputProps={{
-                          'aria-labelledby': labelId,
-                        }}
-                      />
-                    </TableCell>
-                    <TableCell
-                      component="th"
-                      id={labelId}
-                      scope="row"
-                      padding="none"
+                  return (
+                    <TableRow
+                      hover
+                      onClick={(event) => handleClick(event, row.id)}
+                      role="checkbox"
+                      aria-checked={isItemSelected}
+                      tabIndex={-1}
+                      key={row.id}
+                      selected={isItemSelected}
+                      sx={{ cursor: 'pointer' }}
                     >
-                      {row.title}
-                    </TableCell>
-                    <TableCell align="right">{row.description}</TableCell>
-                    <TableCell align="right">{row.assigned_to}</TableCell>
-                    <TableCell align="right">{row.status}</TableCell>
-                    <TableCell align="right">{row.hours}</TableCell>
-                    <TableCell align="right">{row.start_date.toString()}</TableCell>
-                    <TableCell align="right">{row.end_date.toString()}</TableCell>
+                      <TableCell padding="checkbox">
+                        <Checkbox
+                          color="primary"
+                          checked={isItemSelected}
+                          inputProps={{
+                            'aria-labelledby': labelId,
+                          }}
+                        />
+                      </TableCell>
+                      <TableCell
+                        component="th"
+                        id={labelId}
+                        scope="row"
+                        padding="none"
+                      >
+                        {row.title}
+                      </TableCell>
+                      <TableCell align="right">{row.description}</TableCell>
+                      <TableCell align="right">{row.assigned_to}</TableCell>
+                      <TableCell align="right">{row.status}</TableCell>
+                      <TableCell align="right">{row.hours}</TableCell>
+                      <TableCell align="right">{row.start_date.toString()}</TableCell>
+                      <TableCell align="right">{row.end_date.toString()}</TableCell>
 
 
+                    </TableRow>
+                  );
+                })}
+                {emptyRows > 0 && (
+                  <TableRow
+                    style={{
+                      height: (dense ? 33 : 53) * emptyRows,
+                    }}
+                  >
+                    <TableCell colSpan={6} />
                   </TableRow>
-                );
-              })}
-              {emptyRows > 0 && (
-                <TableRow
-                  style={{
-                    height: (dense ? 33 : 53) * emptyRows,
-                  }}
-                >
-                  <TableCell colSpan={6} />
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        <TablePagination
-          rowsPerPageOptions={[5, 10, 25]}
-          component="div"
-          count={rows.length}
-          rowsPerPage={rowsPerPage}
-          page={page}
-          onPageChange={handleChangePage}
-          onRowsPerPageChange={handleChangeRowsPerPage}
-        />
-      </Paper>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          <TablePagination
+            rowsPerPageOptions={[5, 10, 25]}
+            component="div"
+            count={rows.length}
+            rowsPerPage={rowsPerPage}
+            page={page}
+            onPageChange={handleChangePage}
+            onRowsPerPageChange={handleChangeRowsPerPage}
+          />
+        </Paper>
+      )}
       <FormControlLabel
         control={<Switch checked={dense} onChange={handleChangeDense} />}
         label="Dense padding"
