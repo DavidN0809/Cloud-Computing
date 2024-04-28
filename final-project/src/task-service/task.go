@@ -165,6 +165,7 @@ func createTask(w http.ResponseWriter, req *http.Request) {
 
     w.Header().Set("Content-Type", "application/json")
     json.NewEncoder(w).Encode(task)
+	log.Printf("Task created successfully: %+v", task)
 }
 
 
