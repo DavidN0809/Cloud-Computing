@@ -1,3 +1,7 @@
+'use client';
+
+
+
 import React, { useState } from 'react';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
@@ -5,11 +9,7 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import TextField from '@mui/material/TextField';
 import DialogActions from '@mui/material/DialogActions';
-import Title from './Title';
-import { useRouter } from 'next/navigation';
-import { AlertColor } from '@mui/material/Alert';
 
-type Severity = AlertColor;
 
 
 
@@ -22,9 +22,7 @@ export default function TaskAction() {
   const [hours, setHours] = useState('');
   const [start_date, setStartDate] = useState('');
   const [end_date, setEndDate] = useState('');
-  const router = useRouter();
-  const [message, setMessage] = React.useState('');
-  const [severity, setSeverity] = React.useState<Severity>('success');
+
 
   const handleClickOpen = () => {
     setOpen(true);
@@ -55,30 +53,21 @@ export default function TaskAction() {
         body: JSON.stringify(taskData)
       });
       console.log(JSON.stringify(taskData));
-      const data = await response.json(); // Assuming the server responds with JSON
+      const data = await response.json(); // Moved outside of condition to simplify logic
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-  
+      
       console.log('Task created', data);
-      setMessage('Registration successful');
-      setSeverity('success');
-      router.push('/dashboard/tasks?stat=succeed');
-      
-      
+
     } catch (error) {
       console.error('There was a problem with the fetch operation:', error);
-      setMessage('Registration failed');
-      setSeverity('error');
-      router.push('/dashboard/tasks?stat=failed');
-    } finally {
-    handleClose(); // This will close the dialog in any case after operation
-  }
+
+    }
   };
 
   return (
     <React.Fragment>
-      <Title>Today</Title>
       <div>
         <Button variant="outlined" color="primary" onClick={handleClickOpen}>
           Create Task

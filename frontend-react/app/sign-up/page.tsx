@@ -18,7 +18,6 @@ import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import { AlertColor } from '@mui/material/Alert';
 
-import axios from 'axios';
 
 // 定义 Severity 类型
 type Severity = AlertColor;

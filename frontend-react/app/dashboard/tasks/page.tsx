@@ -22,9 +22,12 @@ import NotificationsIcon from '@mui/icons-material/Notifications';
 import { mainListItems, secondaryListItems } from '@/components/Dashboard/listItems';
 import TaskAction from '@/components/Dashboard/task/TaskAction';
 
+import { useSearchParams  } from 'next/navigation';
 
-import Deposits from '@/components/Dashboard/Deposits';
-import Orders from '@/components/Dashboard/Orders';
+import Snackbar from '@mui/material/Snackbar';
+import { AlertColor } from '@mui/material/Alert';
+import Alert from '@mui/material/Alert';
+type Severity = AlertColor;
 
 function Copyright(props: any) {
   return (
@@ -92,12 +95,37 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
 // TODO remove, this demo shouldn't need to reset the theme.
 const defaultTheme = createTheme();
 
+
+
 export default function Dashboard() {
   const [open, setOpen] = React.useState(true);
+  const [message, setMessage] = React.useState('');
+  const [severity, setSeverity] = React.useState<Severity>('success');
   const toggleDrawer = () => {
     setOpen(!open);
   };
 
+  const searchParams = useSearchParams()
+  const stat = searchParams.get('stat')
+  React.useEffect(() => {
+    const stat = searchParams.get('stat');
+    console.log("stat:",stat);
+    if (stat === 'succeed') {
+      setMessage('succeed');
+      setSeverity('success');
+    } else if (stat === 'failed') {
+      setMessage('failed');
+      setSeverity('error');
+    }
+
+  }, [searchParams]);
+  const handleClose = (event?: React.SyntheticEvent | Event, reason?: string) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+
+    setOpen(false);
+  };
   return (
     <ThemeProvider theme={defaultTheme}>
       <Box sx={{ display: 'flex' }}>
@@ -189,6 +217,11 @@ export default function Dashboard() {
 
             </Grid>
             <Copyright sx={{ pt: 4 }} />
+            <Snackbar open={open} autoHideDuration={6000} onClose={handleClose}>
+              <Alert onClose={handleClose} severity={severity} sx={{ width: '100%' }}>
+                {message}
+              </Alert>
+            </Snackbar>
           </Container>
         </Box>
       </Box>
