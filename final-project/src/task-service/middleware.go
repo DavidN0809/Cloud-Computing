@@ -9,28 +9,28 @@ import (
     "github.com/dgrijalva/jwt-go"
 )
 
-func corsMiddleware(next http.Handler) http.Handler {
-    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        // Allow all origins for testing purposes
-        origin := r.Header.Get("Origin")
+//func corsMiddleware(next http.Handler) http.Handler {
+//    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+//        // Allow all origins for testing purposes
+//        origin := r.Header.Get("Origin")
 
         // Check if the CORS headers are already set
-        if w.Header().Get("Access-Control-Allow-Origin") == "" {
-            w.Header().Set("Access-Control-Allow-Origin", origin)
-        }
-        w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-        w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
-        w.Header().Set("Access-Control-Allow-Credentials", "true")
+//        if w.Header().Get("Access-Control-Allow-Origin") == "" {
+//            w.Header().Set("Access-Control-Allow-Origin", origin)
+//        }
+//        w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+//        w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+//        w.Header().Set("Access-Control-Allow-Credentials", "true")
 
         // Handle preflight requests
-        if r.Method == http.MethodOptions {
-            w.WriteHeader(http.StatusOK)
-            return
-        }
+//        if r.Method == http.MethodOptions {
+//            w.WriteHeader(http.StatusOK)
+//            return
+//        }
 
-        next.ServeHTTP(w, r)
-    })
-}
+//        next.ServeHTTP(w, r)
+//    })
+//}
 
 func authMiddleware(next http.HandlerFunc) http.HandlerFunc {
     return func(w http.ResponseWriter, req *http.Request) {
