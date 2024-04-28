@@ -21,6 +21,7 @@ import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import { mainListItems, secondaryListItems } from '@/components/Dashboard/listItems';
 import TaskAction from '@/components/Dashboard/task/TaskAction';
+import ListAllTasks from '@/components/Dashboard/task/ListAllTasks'
 
 import { useSearchParams  } from 'next/navigation';
 
@@ -206,13 +207,23 @@ export default function Dashboard() {
                     p: 2,
                     display: 'flex',
                     flexDirection: 'column',
-                    height: 120,
                   }}
                 >
                   <TaskAction />
                 </Paper>
               </Grid>
-              
+              {/* list task */}
+             <Grid item xs={12} md={8} lg={12}>
+                <Paper
+                  sx={{
+                    p: 2,
+                    display: 'flex',
+                    flexDirection: 'column',
+                  }}
+                >
+                  <ListAllTasks />
+                </Paper>
+              </Grid>
 
 
             </Grid>

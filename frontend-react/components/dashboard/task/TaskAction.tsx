@@ -47,21 +47,42 @@ export default function TaskAction() {
   const handleClickOpenUpdate = () => {
     setOpenUpdate(true);
   };
+  
 
   const handleCreate = async (event: React.MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
+    const isoStartDate = new Date(start_date).toISOString();   //prepare data send to api
+    const isoEndDate = new Date(end_date).toISOString();
+    const hoursInt = parseInt(hours, 10); 
+
+    // 确保hoursInt是有效的数字，如果不是则设置为0或抛出错误
+    if (isNaN(hoursInt)) {
+      console.error('Hours must be a number');
+      // 在此处处理错误，例如设置错误消息或者直接返回以避免发送请求
+      return;
+    }
+
     const taskData = {
-      title,
-      description,
-      assignedTo,
-      status,
-      hours,
-      start_date,
-      end_date
+      "title":title,
+      "description":description,
+      "assigned_to":assignedTo,
+      "status":status,
+      "hours":hours,
+      "start_date":isoStartDate,
+      "end_date":isoEndDate
     };
+    // const testData = {
+    //   "title":"5",
+    //   "description":"5",
+    //   "assigned_to":"assignedTo",
+    //   "status":"plan",
+    //   "hours":8,
+    //   "start_date":"2024-04-28T00:00:00.000Z",
+    //   "end_date":"2024-04-30T00:00:00.000Z"
+    // };
 
     try {
-      const response = await fetch('http://localhost:8002/tasks/create', {
+      const response = await fetch('http://localhost:8000/tasks/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -69,6 +90,9 @@ export default function TaskAction() {
         body: JSON.stringify(taskData)
       });
       console.log(JSON.stringify(taskData));
+      console.log("response.ok:",response.ok);
+      console.log("response.text:",response.text);
+      console.log("response:",response);
       const data = await response.json(); // Assuming the server responds with JSON
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -104,7 +128,7 @@ export default function TaskAction() {
     };
 
     try {
-      const response = await fetch('http://localhost:8002/tasks/create', {
+      const response = await fetch('http://localhost:8000/tasks/update/<task_id>', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -150,8 +174,8 @@ export default function TaskAction() {
                 <TextField margin="dense" id="assigned_to" label="Assigned To" type="text" fullWidth variant="standard" value={assignedTo} onChange={(e) => setAssignedTo(e.target.value)} />
                 <TextField margin="dense" id="status" label="Status" type="text" fullWidth variant="standard" value={status} onChange={(e) => setStatus(e.target.value)} />
                 <TextField margin="dense" id="hours" label="Hours" type="number" fullWidth variant="standard" value={hours} onChange={(e) => setHours(e.target.value)} />
-                <TextField margin="dense" id="start_date" label="start date" type="number" fullWidth variant="standard" value={start_date} onChange={(e) => setStartDate(e.target.value)} />
-                <TextField margin="dense" id="end_date" label="end date" type="number" fullWidth variant="standard" value={end_date} onChange={(e) => setEndDate(e.target.value)} />
+                <TextField margin="dense" id="start_date" label="start date" type="date" fullWidth variant="standard" value={start_date} onChange={(e) => setStartDate(e.target.value)} />
+                <TextField margin="dense" id="end_date" label="end date" type="date" fullWidth variant="standard" value={end_date} onChange={(e) => setEndDate(e.target.value)} />
               </DialogContent>
               <DialogActions>
                 <Button onClick={handleClose} color="secondary">
