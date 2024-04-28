@@ -118,6 +118,7 @@ type User struct {
 
 
 func createUser(w http.ResponseWriter, req *http.Request) {
+ 
     var user User
     err := json.NewDecoder(req.Body).Decode(&user)
     if err != nil {
@@ -131,20 +132,9 @@ func createUser(w http.ResponseWriter, req *http.Request) {
         user.Role = "regular"
     }
 
-    collection := client.Database("user").Collection("users")
-
-    // Check if user already exists with the same username or email
-    var existingUser User
-    findFilter := bson.M{"$or": []bson.M{{"username": user.Username}, {"email": user.Email}}}
-    err = collection.FindOne(context.TODO(), findFilter).Decode(&existingUser)
-    if err == nil {
-        log.Printf("User already exists: %v", existingUser)
-        http.Error(w, "User already exists with the given username or email", http.StatusConflict)
-        return
-    }
-
-    // If user does not exist, create new user
     log.Printf("Creating user: %+v", user)
+
+    collection := client.Database("user").Collection("users")
     user.ID = primitive.NewObjectID()
     _, err = collection.InsertOne(context.TODO(), user)
     if err != nil {
@@ -158,8 +148,6 @@ func createUser(w http.ResponseWriter, req *http.Request) {
     w.WriteHeader(http.StatusCreated) // Set status to 201 Created
     json.NewEncoder(w).Encode(user)
 }
-
-
 
 func loginUser(w http.ResponseWriter, req *http.Request) {
     log.Println("Received request to login user")
