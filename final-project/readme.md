@@ -104,11 +104,10 @@ curl -X GET http://localhost:8000/users/list \
       -H 'Authorization: Bearer <admin_token>' 
 ```
 
-### Delete All Users (Admin only)
+### Delete All Users (Testing only)
 This operation should only succeed with admin privileges.
 ```bash
-curl -X DELETE http://localhost:8000/users/delete-all \
-      -H 'Authorization: Bearer <admin_token>'
+curl -X DELETE http://localhost:8000/users/delete-all 
 ```
 
 ## CRUD Operations for Tasks
@@ -198,12 +197,10 @@ curl -X DELETE http://localhost:8000/tasks/remove/<task_id> \
 curl -X GET http://localhost:8000/tasks/list
 ```
 
-### Delete All Tasks (Admin only)
+### Delete All Tasks (testing only)
 This operation should only succeed with admin privileges.
 ```bash
-curl -X DELETE http://localhost:8000/tasks/removeAllTasks \
-      -H 'Authorization: Bearer <admin_token>' 
-
+curl -X DELETE http://localhost:8000/tasks/removeAllTasks 
 ```
 
 ## CRUD Operations for Billing
@@ -257,11 +254,10 @@ curl -X GET http://localhost:8000/billings/list \
       -H 'Authorization: Bearer <admin_token>' 
 ```
 
-### Delete All Billings (Admin only)
+### Delete All Billings (testing only)
 This operation should only succeed with admin privileges.
 ```bash
-curl -X DELETE http://localhost:8000/billings/removeAllBillings \
-      -H 'Authorization: Bearer <admin_token>' 
+curl -X DELETE http://localhost:8000/billings/removeAllBillings
 ```
 
 
