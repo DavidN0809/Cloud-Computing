@@ -95,6 +95,15 @@ export default function Dashboard() {
   const toggleDrawer = () => {
     setOpen(!open);
   };
+  const cookies = document.cookie;
+  const cookieName = 'savedUserRole=';
+  const cookieArray = cookies.split('; '); // cookies are separated by '; '
+
+  // Find the cookie value for 'savedUserRole'
+  const roleCookie = cookieArray.find(cookie => cookie.startsWith(cookieName));
+  const role = roleCookie ? roleCookie.split('=')[1] : null;
+
+  console.log(role);
 
   return (
     <ThemeProvider theme={defaultTheme}>

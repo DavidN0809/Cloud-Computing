@@ -80,11 +80,18 @@ export default function SignIn() {
                               .map(part => part + '}'); // 再将分割的 "}" 加回去
 
         const tokenObject = JSON.parse(jsonParts[0]);
+        const userInfo = JSON.parse(jsonParts[1]);
         const token = tokenObject.token;
+        const userIdToSave = userInfo.id
+        const userNameToSave = userInfo.username
+        const userRoleToSave = userInfo.role
         console.log('Token:', token); // 这里会输出 token
 
         const expiresIn = 60 * 60 * 24 * 7; // Token expires in 7 days
         document.cookie = `token=${token}; max-age=${expiresIn}; path=/`;
+        document.cookie = `savedUserId=${userIdToSave}; max-age=${expiresIn}; path=/`;
+        document.cookie = `savedUserName=${userNameToSave}; max-age=${expiresIn}; path=/`;
+        document.cookie = `savedUserRole=${userRoleToSave}; token=${token}; max-age=${expiresIn}; path=/`;
 
         window.location.href = '/dashboard';
       } else {

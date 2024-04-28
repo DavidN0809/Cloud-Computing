@@ -9,7 +9,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "18": "0.0.0",
     "@emotion/react": "^11.11.4",
     "@emotion/styled": "^11.11.5",
     "@material-ui/core": "^5.0.0-beta.5",
@@ -17,7 +16,9 @@
     "@mui/icons-material": "^5.15.15",
     "@mui/material": "^5.15.15",
     "@mui/x-charts": "^7.3.1",
+    "cookies": "^0.9.1",
     "next": "14.2.2",
+    "next-client-cookies": "^1.1.1",
     "qs": "^6.12.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
