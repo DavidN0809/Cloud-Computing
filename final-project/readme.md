@@ -123,8 +123,8 @@ curl -X POST "http://localhost:8002/tasks/create" \
          "assigned_to": "<AssignedTo>",
          "status": "planned",
          "hours": 8,
-         "start_date": "<StartDate>",
-         "end_date": "<EndDate>"
+         "start_date": "2024-04-01T00:00:00Z",
+         "end_date": "2024-04-03T00:00:00Z"
      }'
 
 ```
@@ -136,7 +136,7 @@ curl -X GET http://localhost:8000/tasks/get/<task_id>
 
 ### Get tasks by UserID
 ```bash
-curl -X GET "http://localhost:8002/tasks/listByUser/<UserID>"
+curl -X GET "http://localhost:8000/tasks/listByUser/<UserID>"
 ```
 
 ### Update a Task
