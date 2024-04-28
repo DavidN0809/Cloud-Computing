@@ -42,13 +42,13 @@ func main() {
 	mux := http.NewServeMux()
 
 	// User endpoints
-	mux.Handle("/users/list", corsMiddleware(authMiddleware(adminMiddleware(http.HandlerFunc(listUsers)))))
-	mux.Handle("/users/create", corsMiddleware(http.HandlerFunc(createUser)))
-	mux.Handle("/users/get/", corsMiddleware(authMiddleware(adminMiddleware(http.HandlerFunc(getUser)))))
-	mux.Handle("/users/update/", corsMiddleware(authMiddleware(adminMiddleware(http.HandlerFunc(updateUser)))))
-	mux.Handle("/users/remove/", corsMiddleware(authMiddleware(adminMiddleware(http.HandlerFunc(removeUser)))))
-	mux.Handle("/users/delete-all", corsMiddleware(http.HandlerFunc(deleteAllUsers)))
-	mux.Handle("/users/login", corsMiddleware(http.HandlerFunc(loginUser)))
+	mux.Handle("/users/list", authMiddleware(adminMiddleware(http.HandlerFunc(listUsers))))
+	mux.Handle("/users/create", http.HandlerFunc(createUser))
+mux.Handle("/users/get/", authMiddleware(adminMiddleware(http.HandlerFunc(getUser))))
+mux.Handle("/users/update/", authMiddleware(adminMiddleware(http.HandlerFunc(updateUser))))
+mux.Handle("/users/remove/", authMiddleware(adminMiddleware(http.HandlerFunc(removeUser))))
+mux.Handle("/users/delete-all", http.HandlerFunc(deleteAllUsers))
+mux.Handle("/users/login", http.HandlerFunc(loginUser))
 
 	// Start the server
 	log.Println("User Service listening on port 8001...")
@@ -117,7 +117,6 @@ type User struct {
 }
 
 func createUser(w http.ResponseWriter, req *http.Request) {
-  
     var user User
     err := json.NewDecoder(req.Body).Decode(&user)
     if err != nil {
@@ -131,9 +130,20 @@ func createUser(w http.ResponseWriter, req *http.Request) {
         user.Role = "regular"
     }
 
-    log.Printf("Creating user: %+v", user)
-
     collection := client.Database("user").Collection("users")
+
+    // Check if user already exists with the same username or email
+    var existingUser User
+    findFilter := bson.M{"$or": []bson.M{{"username": user.Username}, {"email": user.Email}}}
+    err = collection.FindOne(context.TODO(), findFilter).Decode(&existingUser)
+    if err == nil {
+        log.Printf("User already exists: %v", existingUser)
+        http.Error(w, "User already exists with the given username or email", http.StatusConflict)
+        return
+    }
+
+    // If user does not exist, create new user
+    log.Printf("Creating user: %+v", user)
     user.ID = primitive.NewObjectID()
     _, err = collection.InsertOne(context.TODO(), user)
     if err != nil {

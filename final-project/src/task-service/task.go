@@ -41,13 +41,13 @@ func main() {
 	// Create a new HTTP server
 	mux := http.NewServeMux()
 
-	mux.Handle("/tasks/list", corsMiddleware(http.HandlerFunc(listTasks)))
-	mux.Handle("/tasks/create", corsMiddleware(http.HandlerFunc(createTask)))
-	mux.Handle("/tasks/get/", corsMiddleware(http.HandlerFunc(getTask)))
-	mux.Handle("/tasks/update/", corsMiddleware(http.HandlerFunc(updateTask)))
-	mux.Handle("/tasks/remove/", corsMiddleware(authMiddleware(adminMiddleware(http.HandlerFunc(removeTask)))))
-	mux.Handle("/tasks/removeAllTasks", corsMiddleware(http.HandlerFunc(removeAllTasks)))
-	mux.Handle("/tasks/listByUser/", corsMiddleware(http.HandlerFunc(listTasksByUser)))
+mux.Handle("/tasks/list", http.HandlerFunc(listTasks))
+mux.Handle("/tasks/create", http.HandlerFunc(createTask))
+mux.Handle("/tasks/get/", http.HandlerFunc(getTask))
+mux.Handle("/tasks/update/", http.HandlerFunc(updateTask))
+mux.Handle("/tasks/remove/", authMiddleware(adminMiddleware(http.HandlerFunc(removeTask))))
+mux.Handle("/tasks/removeAllTasks", http.HandlerFunc(removeAllTasks))
+mux.Handle("/tasks/listByUser/", http.HandlerFunc(listTasksByUser))
 
 	// Start the server
 	log.Println("Task Service listening on port 8002...")

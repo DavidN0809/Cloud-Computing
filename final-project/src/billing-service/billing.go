@@ -42,12 +42,13 @@ func main() {
     mux := http.NewServeMux()
 
     // Billing endpoints
-    mux.Handle("/billings/list", corsMiddleware(authMiddleware(adminMiddleware(http.HandlerFunc(listBillings)))))
-    mux.Handle("/billings/create", corsMiddleware(authMiddleware(adminMiddleware(http.HandlerFunc(createBilling)))))
-    mux.Handle("/billings/get/", corsMiddleware(authMiddleware(adminMiddleware(http.HandlerFunc(getBilling)))))
-    mux.Handle("/billings/update/", corsMiddleware(authMiddleware(adminMiddleware(http.HandlerFunc(updateBilling)))))
-    mux.Handle("/billings/remove/", corsMiddleware(authMiddleware(adminMiddleware(http.HandlerFunc(removeBilling)))))
-    mux.Handle("/billings/removeAllBillings", corsMiddleware(http.HandlerFunc(removeAllBillings)))
+// Billing endpoints
+mux.Handle("/billings/list", authMiddleware(adminMiddleware(http.HandlerFunc(listBillings))))
+mux.Handle("/billings/create", authMiddleware(adminMiddleware(http.HandlerFunc(createBilling))))
+mux.Handle("/billings/get/", authMiddleware(adminMiddleware(http.HandlerFunc(getBilling))))
+mux.Handle("/billings/update/", authMiddleware(adminMiddleware(http.HandlerFunc(updateBilling))))
+mux.Handle("/billings/remove/", authMiddleware(adminMiddleware(http.HandlerFunc(removeBilling))))
+mux.Handle("/billings/removeAllBillings", http.HandlerFunc(removeAllBillings))
 
     // Start the server
     log.Println("Billing Service listening on port 8003...")
