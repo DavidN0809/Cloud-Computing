@@ -41,13 +41,13 @@ func main() {
 	// Create a new HTTP server
 	mux := http.NewServeMux()
 
-mux.Handle("/tasks/list", http.HandlerFunc(listTasks))
-mux.Handle("/tasks/create", http.HandlerFunc(createTask))
-mux.Handle("/tasks/get/", http.HandlerFunc(getTask))
-mux.Handle("/tasks/update/", http.HandlerFunc(updateTask))
-mux.Handle("/tasks/remove/", authMiddleware(adminMiddleware(http.HandlerFunc(removeTask))))
-mux.Handle("/tasks/removeAllTasks", http.HandlerFunc(removeAllTasks))
-mux.Handle("/tasks/listByUser/", http.HandlerFunc(listTasksByUser))
+	mux.Handle("/tasks/list", http.HandlerFunc(listTasks))
+	mux.Handle("/tasks/create", http.HandlerFunc(createTask))
+	mux.Handle("/tasks/get/", http.HandlerFunc(getTask))
+	mux.Handle("/tasks/update/", http.HandlerFunc(updateTask))
+	mux.Handle("/tasks/remove/", authMiddleware(adminMiddleware(http.HandlerFunc(removeTask))))
+	mux.Handle("/tasks/removeAllTasks", http.HandlerFunc(removeAllTasks))
+	mux.Handle("/tasks/listByUser/", http.HandlerFunc(listTasksByUser))
 
 	// Start the server
 	log.Println("Task Service listening on port 8002...")
@@ -168,9 +168,6 @@ func createTask(w http.ResponseWriter, req *http.Request) {
 	log.Printf("Task created successfully: %+v", task)
 }
 
-
-
-
 func getTask(w http.ResponseWriter, req *http.Request) {
 	taskID := req.URL.Path[len("/tasks/get/"):]
 	objectID, err := primitive.ObjectIDFromHex(taskID)
@@ -205,6 +202,7 @@ func getTask(w http.ResponseWriter, req *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
+
 func updateTask(w http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodPut {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -228,30 +226,23 @@ func updateTask(w http.ResponseWriter, req *http.Request) {
 	// Prepare update document
 	updateDoc := bson.M{"$set": bson.M{}}
 	for key, value := range updates {
-		// Ensure only allowed fields are updated
+		// Ensure only allowed fields are updated and handle date parsing
 		switch key {
 		case "title", "description", "assigned_to", "status", "hours":
 			updateDoc["$set"].(bson.M)[key] = value
+		case "start_date", "end_date":
+			if dateString, ok := value.(string); ok {
+				parsedDate, err := time.Parse(time.RFC3339, dateString)
+				if err != nil {
+					http.Error(w, "Invalid date format", http.StatusBadRequest)
+					return
+				}
+				updateDoc["$set"].(bson.M)[key] = parsedDate
+			}
 		}
 	}
 
 	collection := client.Database("taskmanagement").Collection("tasks")
-	// Fetch the current task to compare changes
-	var currentTask Task
-	err = collection.FindOne(context.TODO(), bson.M{"_id": objectID}).Decode(&currentTask)
-	if err != nil {
-		http.Error(w, "Task not found", http.StatusNotFound)
-		return
-	}
-
-	// Handle InvoiceID creation if task status changes to 'done'
-	if currentTask.Status != "done" && updates["status"] == "done" {
-		// Generate a new ObjectID for InvoiceID if it's transitioning to 'done'
-		invoiceID := primitive.NewObjectID()
-		updateDoc["$set"].(bson.M)["InvoiceID"] = invoiceID
-		log.Printf("Task updated to 'done'. New InvoiceID: %v generated", invoiceID)
-	}
-
 	_, err = collection.UpdateOne(context.TODO(), bson.M{"_id": objectID}, updateDoc)
 	if err != nil {
 		http.Error(w, "Failed to update task", http.StatusInternalServerError)
