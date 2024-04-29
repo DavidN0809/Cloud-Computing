@@ -48,8 +48,8 @@ mux.Handle("/billings/get/", authMiddleware(adminMiddleware(http.HandlerFunc(get
 mux.Handle("/billings/update/", authMiddleware(adminMiddleware(http.HandlerFunc(updateBilling))))
 mux.Handle("/billings/remove/", authMiddleware(adminMiddleware(http.HandlerFunc(removeBilling))))
 mux.Handle("/billings/removeAllBillings", http.HandlerFunc(removeAllBillings))
-mux.Handle("/billings/createForTaskService", http.HandlerFunc(createBilling))
-mux.Handle("/billings/listByUserID", http.HandlerFunc(listBillingsUserID))
+mux.Handle("/billings/listByUserID", authMiddleware(adminMiddleware(http.HandlerFunc(listBillingsUserID))))
+mux.Handle("/billings/createForTaskService", taskServiceAuthMiddleware(http.HandlerFunc(createBilling)))
 
 
     // Start the server

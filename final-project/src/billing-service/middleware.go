@@ -90,3 +90,15 @@ func isAdmin(req *http.Request) bool {
     return role == "admin"
 }
 
+func taskServiceAuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
+    return func(w http.ResponseWriter, req *http.Request) {
+        taskServiceToken := req.Header.Get("X-Task-Service")
+        expectedToken := "your-task-service-secret" // You should store and retrieve this securely
+
+        if taskServiceToken != expectedToken {
+            http.Error(w, "Unauthorized", http.StatusUnauthorized)
+            return
+        }
+        next(w, req)
+    }
+}
