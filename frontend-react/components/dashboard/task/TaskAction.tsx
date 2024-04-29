@@ -32,6 +32,17 @@ export default function TaskAction() {
   const [message, setMessage] = React.useState('');
   const [severity, setSeverity] = React.useState<Severity>('success');
 
+  const [isAdmin, setIsAdmin] = React.useState(false);
+  React.useEffect(() => {
+    const cookie = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('savedUserRole='));
+    if (cookie) {
+      const role = cookie.split('=')[1];
+      setIsAdmin(role === 'admin');
+    }
+  }, []);
+
   const handleClickOpen = () => {
     setOpen(true);
   };
@@ -268,24 +279,33 @@ export default function TaskAction() {
 
 
           <Grid item md={4} display="flex" justifyContent="center">
-            <Button variant="outlined" color="primary" onClick={handleClickOpenDelete}>
-              Delete Task
+          {isAdmin ? (
+            <>
+              <Button variant="outlined" color="primary" onClick={handleClickOpenDelete}>
+                Delete Task
+              </Button>
+              <Dialog open={openDelete} onClose={handleClose}>
+                <DialogTitle>Delete Task</DialogTitle>
+                <DialogContent>
+                  <TextField autoFocus margin="dense" id="task_id" label="Task ID" type="text" fullWidth variant="standard" value={task_id} onChange={(e) => setTaskId(e.target.value)} />
+                </DialogContent>
+                <DialogActions>
+                  <Button onClick={handleClose} color="secondary">
+                    Cancel
+                  </Button>
+                  <Button onClick={handleDelete} color="primary">
+                    Delete
+                  </Button>
+                </DialogActions>
+              </Dialog>
+            </>
+          ) : (
+            <Button variant="outlined" color="secondary">
+              Access Denied
             </Button>
-            <Dialog open={openDelete} onClose={handleClose}>
-              <DialogTitle>Delete Task</DialogTitle>
-              <DialogContent>
-                <TextField autoFocus margin="dense" id="task_id" label="Task ID" type="text" fullWidth variant="standard" value={task_id} onChange={(e) => setTaskId(e.target.value)} />
-              </DialogContent>
-              <DialogActions>
-                <Button onClick={handleClose} color="secondary">
-                  Cancel
-                </Button>
-                <Button onClick={handleDelete} color="primary">
-                  Delete
-                </Button>
-              </DialogActions>
-            </Dialog>
-          </Grid>
+          )}
+        </Grid>
+
 
 
 

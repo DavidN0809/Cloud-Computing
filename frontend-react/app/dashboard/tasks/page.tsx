@@ -100,12 +100,25 @@ const defaultTheme = createTheme();
 
 
 export default function Dashboard() {
+  
   const [open, setOpen] = React.useState(true);
   const [message, setMessage] = React.useState('');
   const [severity, setSeverity] = React.useState<Severity>('success');
   const toggleDrawer = () => {
     setOpen(!open);
   };
+
+
+  const [isAdmin, setIsAdmin] = React.useState(false);
+  React.useEffect(() => {
+    const cookie = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('savedUserRole='));
+    if (cookie) {
+      const role = cookie.split('=')[1];
+      setIsAdmin(role === 'admin');
+    }
+  }, []);
 
   const searchParams = useSearchParams()
   const stat = searchParams.get('stat')
@@ -214,17 +227,12 @@ export default function Dashboard() {
                 </Paper>
               </Grid>
               {/* list task */}
-             <Grid item xs={12} md={8} lg={12}>
-                <Paper
-                  sx={{
-                    p: 2,
-                    display: 'flex',
-                    flexDirection: 'column',
-                  }}
-                >
-                  <ListAllTasks />
-                </Paper>
+              <Grid item xs={12} md={8} lg={12}>
+                  <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
+                    {isAdmin ? <ListAllTasks /> : <div>Access Denied</div>}
+                  </Paper>
               </Grid>
+             
               {/* search task */}
              <Grid item xs={12} md={8} lg={12}>
                 <Paper
@@ -255,3 +263,4 @@ export default function Dashboard() {
     </ThemeProvider>
   );
 }
+
