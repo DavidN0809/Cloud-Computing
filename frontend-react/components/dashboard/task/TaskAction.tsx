@@ -111,6 +111,11 @@ export default function TaskAction() {
     // };
 
     try {
+      const cookies = document.cookie;
+      const cookieName = 'savedUserId=';
+      const cookieArray = cookies.split('; ');
+      const tokenCookie = cookieArray.find(cookie => cookie.startsWith(cookieName));
+      const savedUserId = tokenCookie ? tokenCookie.split('=')[1] : null;
       const response = await fetch('http://localhost:8000/tasks/create', {
         method: 'POST',
         headers: {
@@ -220,9 +225,7 @@ export default function TaskAction() {
     try {
       const cookies = document.cookie;
       const cookieName = 'token=';
-      const cookieArray = cookies.split('; '); // cookies are separated by '; '
-
-      // Find the cookie value for 'savedUserRole'
+      const cookieArray = cookies.split('; ');
       const tokenCookie = cookieArray.find(cookie => cookie.startsWith(cookieName));
       const admin_token = tokenCookie ? tokenCookie.split('=')[1] : null;
 
@@ -301,7 +304,7 @@ export default function TaskAction() {
                 <TextField margin="dense" id="hours" label="Hours" type="number" fullWidth variant="standard" value={hours} onChange={(e) => setHours(e.target.value)} />
                 <TextField margin="dense" id="start_date" label="start date" type="date" fullWidth variant="standard" value={start_date} onChange={(e) => setStartDate(e.target.value)} />
                 <TextField margin="dense" id="end_date" label="end date" type="date" fullWidth variant="standard" value={end_date} onChange={(e) => setEndDate(e.target.value)} />
-                <TextField margin="dense" id="parent_task" label="parent task date" type="text" fullWidth variant="standard" value={parent_task} onChange={(e) => setParentTask(e.target.value)} />
+                <TextField margin="dense" id="parent_task" label="parent task" type="text" fullWidth variant="standard" value={parent_task} onChange={(e) => setParentTask(e.target.value)} />
               </DialogContent>
               <DialogActions>
                 <Button onClick={handleClose} color="secondary">

@@ -4,8 +4,7 @@ import { NextResponse } from 'next/server';
 export function middleware(request) {
   const { nextUrl } = request;
   const { pathname } = request.nextUrl;
-  const role = request.cookies.get('savedUserRole');
-  console.log("role:",role.value);
+  
 
   // 如果访问dashboard且未登录，则重定向到登录页面
   if (pathname.startsWith('/dashboard')) {
@@ -20,7 +19,8 @@ export function middleware(request) {
   }
 
   if (pathname.startsWith('/dashboard/member')) {
-    
+    const role = request.cookies.get('savedUserRole');
+    console.log("role:",role.value);
     if (role.value!=="admin") {
       // Assuming you want to redirect to the home page
       const url = nextUrl.clone();
@@ -31,7 +31,8 @@ export function middleware(request) {
   }
 
   if (pathname.startsWith('/dashboard/billing')) {
-    
+    const role = request.cookies.get('savedUserRole');
+    console.log("role:",role.value);
     if (role.value!=="admin") {
       // Assuming you want to redirect to the home page
       const url = nextUrl.clone();
