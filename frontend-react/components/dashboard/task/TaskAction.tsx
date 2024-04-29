@@ -28,6 +28,7 @@ export default function TaskAction() {
   const [start_date, setStartDate] = useState('');
   const [end_date, setEndDate] = useState('');
   const [task_id, setTaskId] = useState('');
+  const [parent_task, setParentTask] = useState('');
   const router = useRouter();
   const [message, setMessage] = React.useState('');
   const [severity, setSeverity] = React.useState<Severity>('success');
@@ -71,17 +72,34 @@ export default function TaskAction() {
     event.preventDefault();
     const isoStartDate = new Date(start_date).toISOString();   //prepare data send to api
     const isoEndDate = new Date(end_date).toISOString();
-    
-
-    const taskData = {
-      "title":title,
-      "description":description,
-      "assigned_to":assignedTo,
-      "status":status,
-      "hours":parseInt(hours, 10),
-      "start_date":isoStartDate,
-      "end_date":isoEndDate
+    type TaskData = {
+      title: string;
+      description: string;
+      assigned_to: string;
+      status: string;
+      hours: number;
+      start_date: string;
+      end_date: string;
+      parent_task?: string; // 这行添加了一个可选属性
     };
+    
+    const taskData: TaskData = {
+      title: title,
+      description: description,
+      assigned_to: assignedTo,
+      status: status,
+      hours: parseInt(hours, 10),
+      start_date: isoStartDate,
+      end_date: isoEndDate,
+      // 现在你可以条件性地添加 parent_task
+    };
+    
+    // Conditionally add the parent_task if it is not empty
+    if (parent_task !== "") {
+      taskData.parent_task = parent_task;
+    }
+
+    
     // const testData = {
     //   "title":"5",
     //   "description":"5",
@@ -110,12 +128,12 @@ export default function TaskAction() {
       }
   
       console.log('Task created', data);
-      window.location.href = '/dashboard/tasks?stat=succeed';
+      //window.location.href = '/dashboard/tasks?stat=succeed';
       
       
     } catch (error) {
       console.error('There was a problem with the fetch operation:', error);
-      window.location.href = '/dashboard/tasks?stat=failed';
+      //window.location.href = '/dashboard/tasks?stat=failed';
     } finally {
     handleClose(); // This will close the dialog in any case after operation
   }
@@ -238,6 +256,7 @@ export default function TaskAction() {
                 <TextField margin="dense" id="hours" label="Hours" type="number" fullWidth variant="standard" value={hours} onChange={(e) => setHours(e.target.value)} />
                 <TextField margin="dense" id="start_date" label="start date" type="date" fullWidth variant="standard" value={start_date} onChange={(e) => setStartDate(e.target.value)} />
                 <TextField margin="dense" id="end_date" label="end date" type="date" fullWidth variant="standard" value={end_date} onChange={(e) => setEndDate(e.target.value)} />
+                <TextField margin="dense" id="parent_task" label="parent task date" type="text" fullWidth variant="standard" value={parent_task} onChange={(e) => setParentTask(e.target.value)} />
               </DialogContent>
               <DialogActions>
                 <Button onClick={handleClose} color="secondary">

@@ -24,6 +24,7 @@ import Chart from '@/components/Dashboard/overall/Chart';
 import Deposits from '@/components/Dashboard/overall/Deposits';
 import Orders from '@/components/Dashboard/overall/Orders';
 import { useRouter  } from 'next/navigation';
+import LogoutIcon from '@mui/icons-material/Logout';
 
 function Copyright(props: any) {
   return (
@@ -158,7 +159,7 @@ export default function Dashboard() {
 
             <IconButton color="inherit" onClick={handleLogout}>
               <Badge badgeContent={0} color="secondary">
-                <NotificationsIcon />
+                <LogoutIcon />
               </Badge>
             </IconButton>
 

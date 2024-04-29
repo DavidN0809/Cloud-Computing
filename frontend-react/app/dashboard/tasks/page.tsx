@@ -24,6 +24,9 @@ import TaskAction from '@/components/Dashboard/task/TaskAction';
 import ListAllTasks from '@/components/Dashboard/task/ListAllTasks'
 import SearchComponent from '@/components/Dashboard/task/SearchComponent'
 
+import { useRouter  } from 'next/navigation';
+import LogoutIcon from '@mui/icons-material/Logout';
+
 import { useSearchParams  } from 'next/navigation';
 
 import Snackbar from '@mui/material/Snackbar';
@@ -108,6 +111,18 @@ export default function Dashboard() {
     setOpen(!open);
   };
 
+  const router = useRouter();
+
+  const handleLogout = () => {
+    // 清除所有 cookies
+    document.cookie.split(";").forEach((c) => {
+      document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date(0).toUTCString() + ";path=/");
+    });
+
+    // 跳转到首页
+    router.push('/');
+  };
+
 
   const [isAdmin, setIsAdmin] = React.useState(false);
   React.useEffect(() => {
@@ -177,6 +192,13 @@ export default function Dashboard() {
                 <NotificationsIcon />
               </Badge>
             </IconButton>
+
+            <IconButton color="inherit" onClick={handleLogout}>
+              <Badge badgeContent={0} color="secondary">
+                <LogoutIcon />
+              </Badge>
+            </IconButton>
+
           </Toolbar>
         </AppBar>
         <Drawer variant="permanent" open={open}>
