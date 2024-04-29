@@ -10,6 +10,7 @@ import BarChartIcon from '@mui/icons-material/BarChart';
 import TaskIcon from '@mui/icons-material/Task';
 import LayersIcon from '@mui/icons-material/Layers';
 import AssignmentIcon from '@mui/icons-material/Assignment';
+import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 
 
 import Link from 'next/link';
@@ -38,11 +39,11 @@ export const mainListItems = (
       <ListItemText primary="Members" />
     </ListItemButton>
 
-    <ListItemButton>
+    <ListItemButton component="a" href="/dashboard/Billing">
       <ListItemIcon>
-        <BarChartIcon />
+        <ReceiptLongIcon />
       </ListItemIcon>
-      <ListItemText primary="Reports" />
+      <ListItemText primary="Billing" />
     </ListItemButton>
 
 
