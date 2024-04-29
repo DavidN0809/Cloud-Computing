@@ -16,6 +16,17 @@ export function middleware(request) {
       return NextResponse.redirect(url);
     }
   }
+  // 如果访问dashboard且未登录，则重定向到登录页面
+  if (pathname.startsWith('/dashboard/member')) {
+    const role = request.cookies.get('savedUserRole');
+    console.log(role);
+    if (role!=="admin") {
+      // Assuming you want to redirect to the home page
+      const url = nextUrl.clone();
+      url.pathname = '/accessDenied';
+      return NextResponse.redirect(url);
+    }
+  }
 
   return NextResponse.next();
 }
