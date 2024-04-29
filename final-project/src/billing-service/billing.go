@@ -49,6 +49,8 @@ mux.Handle("/billings/update/", authMiddleware(adminMiddleware(http.HandlerFunc(
 mux.Handle("/billings/remove/", authMiddleware(adminMiddleware(http.HandlerFunc(removeBilling))))
 mux.Handle("/billings/removeAllBillings", http.HandlerFunc(removeAllBillings))
 mux.Handle("/billings/createForTaskService", http.HandlerFunc(createBilling))
+mux.Handle("/billings/listByUserID", http.HandlerFunc(listBillingsUserID))
+
 
     // Start the server
     log.Println("Billing Service listening on port 8003...")
@@ -113,6 +115,7 @@ type Billing struct {
 	UserID primitive.ObjectID `bson:"user_id" json:"user_id"`
 	TaskID primitive.ObjectID `bson:"task_id" json:"task_id"`
 	Hours  float64             `bson:"hours" json:"hours"`
+        HourlyRate *float64           `bson:"hourly_rate,omitempty" json:"hourly_rate,omitempty"`
 	Amount float64             `bson:"amount" json:"amount"`
 }
 
@@ -131,8 +134,11 @@ func createBilling(w http.ResponseWriter, req *http.Request) {
         return
     }
 
-    hourlyRate := 100.0 // Adjust this value as necessary
-    billing.Amount = float64(billing.Hours) * hourlyRate
+    defaultRate := 100.0
+    if billing.HourlyRate == nil {
+        billing.HourlyRate = &defaultRate
+    }
+    billing.Amount = billing.Hours * *billing.HourlyRate
 
     collection := client.Database("billing").Collection("billings")
     billing.ID = primitive.NewObjectID()
@@ -188,10 +194,15 @@ func updateBilling(w http.ResponseWriter, req *http.Request) {
         http.Error(w, "Invalid billing ID", http.StatusBadRequest)
         return
     }
-    log.Printf("Received request to update billing with ID: %s", billingID)  // Log the billing ID
 
-    var billing Billing
-    err = json.NewDecoder(req.Body).Decode(&billing)
+    var input struct {
+        UserID     *primitive.ObjectID `json:"user_id"`
+        TaskID     *primitive.ObjectID `json:"task_id"`
+        Hours      *float64            `json:"hours"`
+        HourlyRate *float64            `json:"hourly_rate"`
+        Amount     *float64            `json:"amount"`
+    }
+    err = json.NewDecoder(req.Body).Decode(&input)
     if err != nil {
         http.Error(w, "Invalid request body", http.StatusBadRequest)
         return
@@ -199,19 +210,57 @@ func updateBilling(w http.ResponseWriter, req *http.Request) {
 
     collection := client.Database("billing").Collection("billings")
     filter := bson.M{"_id": objectID}
-    update := bson.M{"$set": bson.M{
-        "user_id": billing.UserID,
-        "task_id": billing.TaskID,
-        "hours":   billing.Hours,
-        "amount":  billing.Amount,
-    }}
 
-    _, err = collection.UpdateOne(context.TODO(), filter, update)
+    // Fetch the current data to handle calculations properly
+    var current Billing
+    err = collection.FindOne(context.TODO(), filter).Decode(&current)
+    if err != nil {
+        http.Error(w, "Billing not found", http.StatusNotFound)
+        return
+    }
+
+    update := bson.M{}
+    if input.UserID != nil {
+        update["user_id"] = *input.UserID
+    }
+    if input.TaskID != nil {
+        update["task_id"] = *input.TaskID
+    }
+    if input.Hours != nil {
+        update["hours"] = *input.Hours
+    }
+    if input.HourlyRate != nil {
+        update["hourly_rate"] = *input.HourlyRate
+    }
+
+    // Determine amount calculation logic
+    finalHours := current.Hours
+    if input.Hours != nil {
+        finalHours = *input.Hours
+    }
+
+    finalRate := current.HourlyRate
+    if input.HourlyRate != nil {
+        finalRate = input.HourlyRate
+    } else if finalRate == nil {
+        defaultRate := 100.0 // Default rate if no rate is recorded or provided
+        finalRate = &defaultRate
+    }
+
+    if input.HourlyRate != nil || input.Hours != nil {
+        update["amount"] = *finalRate * finalHours
+    }
+    if input.Amount != nil {
+        update["amount"] = *input.Amount // Override calculated amount if direct amount is provided
+    }
+
+    _, err = collection.UpdateOne(context.TODO(), filter, bson.M{"$set": update})
     if err != nil {
         http.Error(w, "Failed to update billing", http.StatusInternalServerError)
         return
     }
-    log.Println("Billing updated successfully")  // Confirm successful update
+
+    log.Println("Billing updated successfully")
     w.WriteHeader(http.StatusNoContent)
 }
 
@@ -288,4 +337,40 @@ func removeAllBillings(w http.ResponseWriter, req *http.Request) {
 
     log.Printf("All billings removed successfully, count: %d")  // Log the count of billings removed
     w.WriteHeader(http.StatusNoContent)
+}
+func listBillingsUserID(w http.ResponseWriter, req *http.Request) {
+    log.Println("Received request to list billings")
+    if req.Method != http.MethodGet {
+        http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+        return
+    }
+
+    var filter bson.M = bson.M{}
+    if userIDParam := req.URL.Query().Get("user_id"); userIDParam != "" {
+        userID, err := primitive.ObjectIDFromHex(userIDParam)
+        if err != nil {
+            http.Error(w, "Invalid user ID", http.StatusBadRequest)
+            return
+        }
+        filter["user_id"] = userID
+    }
+
+    collection := client.Database("billing").Collection("billings")
+    cursor, err := collection.Find(context.TODO(), filter)
+    if err != nil {
+        http.Error(w, "Failed to list billings", http.StatusInternalServerError)
+        return
+    }
+    defer cursor.Close(context.Background())
+
+    var billings []Billing
+    err = cursor.All(context.Background(), &billings)
+    if err != nil {
+        http.Error(w, "Failed to decode billings", http.StatusInternalServerError)
+        return
+    }
+
+    log.Println("Billings listed successfully")
+    w.Header().Set("Content-Type", "application/json")
+    json.NewEncoder(w).Encode(billings)
 }
