@@ -9,41 +9,27 @@ import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 
 function SearchComponent() {
-  const [searchType, setSearchType] = useState('taskid');
+  const [searchType, setSearchType] = useState('userid');
   const [searchText, setSearchText] = useState('');
-  const [searchResults, setSearchResults] = useState<TaskData[]>([]);
+  const [searchResults, setSearchResults] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
   const handleSwitchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchType(event.target.checked ? 'userid' : 'taskid');
+    setSearchType(event.target.checked ? 'userid' : 'userid'); // Adjust if needed for different user search types
     // Reset states when search type changes
     setSearchResults([]);
     setError(null);
   };
 
-  interface TaskData {
+  interface UserData {
     id: number;
-    title: string;
-    description: string;
-    assigned_to: string;
-    status: string;
-    hours: number;
-    start_date: Date;
-    end_date: Date;
+    username: string;
+    email: string;
   }
   
-  const createData = (id: number, title: string, description: string, assigned_to: string, status: string, hours: number, start_date: Date, end_date: Date): TaskData => {
-    return {
-      id,
-      title,
-      description,
-      assigned_to,
-      status,
-      hours,
-      start_date,
-      end_date,
-    };
+  const createData = (id: number, username: string, email: string): UserData => {
+    return { id, username, email };
   };
 
   useEffect(() => {
@@ -54,10 +40,8 @@ function SearchComponent() {
     setLoading(true);
     setError(null);
     try {
-      let url = searchType === 'taskid' ?
-        `http://localhost:8000/tasks/get/${searchText}` :
-        `http://localhost:8000/tasks/listByUser/${searchText}`;
-  
+      const url = `http://localhost:8000/users/get/${searchText}`;
+
       const response = await fetch(url);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -65,33 +49,13 @@ function SearchComponent() {
       const data = await response.json();
       console.log("data:", data);
   
-      // If the response is an object with a 'task' property, handle it as a single task object.
-      if (data && data.task) {
-        const task = createData(
-          data.task.id,
-          data.task.title,
-          data.task.description,
-          data.task.assigned_to,
-          data.task.status,
-          data.task.hours,
-          new Date(data.task.start_date),
-          new Date(data.task.end_date)
-        );
-        setSearchResults([task]); // Set as an array with the single object
+      // Assume the response is an array of users or a single user object
+      if (Array.isArray(data)) {
+        const users = data.map((user) => createData(user.id, user.username, user.email));
+        setSearchResults(users);
       } else {
-        const tasks: TaskData[] = data.map((task: TaskData) => 
-          createData(
-            task.id,
-            task.title,
-            task.description,
-            task.assigned_to,
-            task.status,
-            task.hours,
-            new Date(task.start_date),
-            new Date(task.end_date)
-          )
-        );
-        setSearchResults(tasks);
+        const user = createData(data.id, data.username, data.email);
+        setSearchResults([user]); // Set as an array with the single object
       }
     } catch (error) {
       setError(error instanceof Error ? error : new Error('An unknown error occurred'));
@@ -106,13 +70,13 @@ function SearchComponent() {
           <Grid item>
             <FormControlLabel
               control={<Switch checked={searchType === 'userid'} onChange={handleSwitchChange} />}
-              label={searchType === 'taskid' ? 'Search by Task ID' : 'Search by User ID'}
+              label={searchType === 'userid' ? 'Search by User ID' : 'Search by User ID'}
             />
           </Grid>
           <Grid item xs>
             <TextField
               fullWidth
-              label={searchType === 'taskid' ? 'Task ID' : 'User ID'}
+              label="User ID"
               variant="outlined"
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
@@ -137,29 +101,19 @@ function SearchComponent() {
             <Table sx={{ minWidth: 650 }} aria-label="simple table">
               <TableHead>
                 <TableRow>
-                  <TableCell>Title</TableCell>
-                  <TableCell align="right">ID</TableCell>
-                  <TableCell align="right">Description</TableCell>
-                  <TableCell align="right">Assigned To</TableCell>
-                  <TableCell align="right">Status</TableCell>
-                  <TableCell align="right">Hours</TableCell>
-                  <TableCell align="right">Start Date</TableCell>
-                  <TableCell align="right">End Date</TableCell>
+                  <TableCell>ID</TableCell>
+                  <TableCell align="right">Username</TableCell>
+                  <TableCell align="right">Email</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
-                {searchResults.map((task) => (
-                  <TableRow key={task.id}>
+                {searchResults.map((user) => (
+                  <TableRow key={user.id}>
                     <TableCell component="th" scope="row">
-                      {task.title}
+                      {user.id}
                     </TableCell>
-                    <TableCell align="right">{task.id}</TableCell>
-                    <TableCell align="right">{task.description}</TableCell>
-                    <TableCell align="right">{task.assigned_to}</TableCell>
-                    <TableCell align="right">{task.status}</TableCell>
-                    <TableCell align="right">{task.hours}</TableCell>
-                    <TableCell align="right">{task.start_date.toDateString()}</TableCell>
-                    <TableCell align="right">{task.end_date.toDateString()}</TableCell>
+                    <TableCell align="right">{user.username}</TableCell>
+                    <TableCell align="right">{user.email}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -176,3 +130,4 @@ function SearchComponent() {
 }
 
 export default SearchComponent;
+``

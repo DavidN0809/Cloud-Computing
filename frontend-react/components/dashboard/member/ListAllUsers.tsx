@@ -23,60 +23,27 @@ import FilterListIcon from '@mui/icons-material/FilterList';
 import { visuallyHidden } from '@mui/utils';
 
 interface Data {
-  id:number;
-  title: string;
-  description: string;
-  assigned_to: string;
-  status: string;
-  hours: number;
-  start_date: Date;
-  end_date: Date;
+  id: string;
+  username: string;
+  email: string;
+  password: string;
 }
 
 function createData(
-  id:number,
-  title: string,
-  description: string,
-  assigned_to: string,
-  status: string,
-  hours: number,
-  start_date: Date,
-  end_date: Date
+  id: string,
+  username: string,
+  email: string,
+  password: string,
 ): Data {
   return {
     id,
-    title,
-    description,
-    assigned_to,
-    status,
-    hours,
-    start_date,
-    end_date,
+    username,
+    email,
+    password,
   };
 }
 
-const exStartdate = new Date("2024-04-01T00:00:00Z");
-const exEnddate = new Date("2024-04-03T00:00:00Z");
-const simuJson = '[{"id":"662dcf5c418cb57c6592dfe8","title":"Project Planning","description":"Initial planning phase for the project.","assigned_to":"662dafbe069a04291d6c49e4","status":"planned","hours":8,"start_date":"2024-04-01T00:00:00Z","end_date":"2024-04-03T00:00:00Z","invoice_id":"000000000000000000000000"},{"id":"662e89aec069bcc6231e8cee","title":"2","description":"2 Warning: This task overlaps with existing task(s).","assigned_to":"662dafbe069a04291d6c49e4","status":"planned","hours":8,"start_date":"2024-04-01T00:00:00Z","end_date":"2024-04-03T00:00:00Z","invoice_id":"000000000000000000000000"},{"id":"662e89bfc069bcc6231e8cef","title":"3","description":"3 Warning: This task overlaps with existing task(s).","assigned_to":"662dafbe069a04291d6c49e4","status":"planned","hours":8,"start_date":"2024-04-01T00:00:00Z","end_date":"2024-04-03T00:00:00Z","invoice_id":"000000000000000000000000"}]';
-
-
-
-// const rows = [
-//   createData(200,"Project Planning",
-//   "Initial planning phase for the project.",
-//   "<AssignedTo>",
-//   "planned",
-//   8,
-//   exStartdate,
-//   exEnddate),
- 
-// ];
-
 function descendingComparator<T>(a: T, b: T, orderBy: keyof T) {
-  if (orderBy === 'start_date' || orderBy === 'end_date') {
-    // Convert dates to timestamps for comparison
-    return (b[orderBy] as Date).getTime() - (a[orderBy] as Date).getTime();
-  }
   if (b[orderBy] < a[orderBy]) {
     return -1;
   }
@@ -92,18 +59,14 @@ function getComparator<Key extends keyof any>(
   order: Order,
   orderBy: Key,
 ): (
-  a: { [key in Key]: number | string | Date},
-  b: { [key in Key]: number | string | Date},
+  a: { [key in Key]: number | string },
+  b: { [key in Key]: number | string },
 ) => number {
   return order === 'desc'
     ? (a, b) => descendingComparator(a, b, orderBy)
     : (a, b) => -descendingComparator(a, b, orderBy);
 }
 
-// Since 2020 all major browsers ensure sort stability with Array.prototype.sort().
-// stableSort() brings sort stability to non-modern browsers (notably IE11). If you
-// only support modern browsers you can replace stableSort(exampleArray, exampleComparator)
-// with exampleArray.slice().sort(exampleComparator)
 function stableSort<T>(array: readonly T[], comparator: (a: T, b: T) => number) {
   const stabilizedThis = array.map((el, index) => [el, index] as [T, number]);
   stabilizedThis.sort((a, b) => {
@@ -125,52 +88,28 @@ interface HeadCell {
 
 const headCells: readonly HeadCell[] = [
   {
-    id: 'title',
+    id: 'username',
     numeric: false,
     disablePadding: true,
-    label: 'title',
+    label: 'Username',
   },
   {
     id: 'id',
     numeric: false,
     disablePadding: true,
-    label: 'task id',
+    label: 'User ID',
   },
   {
-    id: 'description',
+    id: 'email',
     numeric: false,
     disablePadding: false,
-    label: 'description',
+    label: 'Email',
   },
   {
-    id: 'assigned_to',
+    id: 'password',
     numeric: false,
     disablePadding: false,
-    label: 'assigned to',
-  },
-  {
-    id: 'status',
-    numeric: false,
-    disablePadding: false,
-    label: 'status',
-  },
-  {
-    id: 'hours',
-    numeric: true,
-    disablePadding: false,
-    label: 'hours (h)',
-  },
-  {
-    id: 'start_date',
-    numeric: true,
-    disablePadding: false,
-    label: 'start at date',
-  },
-  {
-    id: 'end_date',
-    numeric: true,
-    disablePadding: false,
-    label: 'end at date',
+    label: 'Password',
   },
 ];
 
@@ -184,8 +123,7 @@ interface EnhancedTableProps {
 }
 
 function EnhancedTableHead(props: EnhancedTableProps) {
-  const { onSelectAllClick, order, orderBy, numSelected, rowCount, onRequestSort } =
-    props;
+  const { onSelectAllClick, order, orderBy, numSelected, rowCount, onRequestSort } = props;
   const createSortHandler =
     (property: keyof Data) => (event: React.MouseEvent<unknown>) => {
       onRequestSort(event, property);
@@ -201,7 +139,7 @@ function EnhancedTableHead(props: EnhancedTableProps) {
             checked={rowCount > 0 && numSelected === rowCount}
             onChange={onSelectAllClick}
             inputProps={{
-              'aria-label': 'select all desserts',
+              'aria-label': 'select all users',
             }}
           />
         </TableCell>
@@ -265,7 +203,7 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
           id="tableTitle"
           component="div"
         >
-          All Tasks
+          All Users
         </Typography>
       )}
       {numSelected > 0 ? (
@@ -284,10 +222,11 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
     </Toolbar>
   );
 }
+
 export default function ListAllUsers() {
   const [order, setOrder] = React.useState<Order>('asc');
-  const [orderBy, setOrderBy] = React.useState<keyof Data>('end_date');
-  const [selected, setSelected] = React.useState<readonly number[]>([]);
+  const [orderBy, setOrderBy] = React.useState<keyof Data>('username');
+  const [selected, setSelected] = React.useState<readonly string[]>([]);
   const [page, setPage] = React.useState(0);
   const [dense, setDense] = React.useState(false);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
@@ -296,43 +235,39 @@ export default function ListAllUsers() {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    const fetchTasks = async () => {
+    const fetchUsers = async () => {
       setLoading(true);
       try {
-        const response = await fetch('http://localhost:8000/tasks/list');
+        const response = await fetch('http://localhost:8000/users/list', {
+          headers: {
+            'Authorization': 'Bearer <admin_token>',
+          },
+        });
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         const data = await response.json();
-        console.log(data)
-        const tasks: Data[] = data.map((task: Data) => 
+        const users: Data[] = data.map((user: Data) =>
           createData(
-            task.id,
-            task.title,
-            task.description,
-            task.assigned_to,
-            task.status,
-            task.hours,
-            new Date(task.start_date),
-            new Date(task.end_date)
+            user.id,
+            user.username,
+            user.email,
+            user.password,
           )
         );
-        setRows(tasks);
+        setRows(users);
       } catch (error) {
         if (error instanceof Error) {
-          // Make sure the caught error is an instance of Error before setting it
           setError(error);
         } else {
-          // Otherwise, set a generic error
           setError(new Error('An unknown error occurred'));
         }
       }
       setLoading(false);
     };
 
-    fetchTasks();
+    fetchUsers();
   }, []);
-
 
   const handleRequestSort = (
     event: React.MouseEvent<unknown>,
@@ -352,9 +287,9 @@ export default function ListAllUsers() {
     setSelected([]);
   };
 
-  const handleClick = (event: React.MouseEvent<unknown>, id: number) => {
+  const handleClick = (event: React.MouseEvent<unknown>, id: string) => {
     const selectedIndex = selected.indexOf(id);
-    let newSelected: number[] = [];
+    let newSelected: string[] = [];
 
     if (selectedIndex === -1) {
       newSelected = newSelected.concat(selected, id);
@@ -384,20 +319,18 @@ export default function ListAllUsers() {
     setDense(event.target.checked);
   };
 
-  const isSelected = (id: number) => selected.indexOf(id) !== -1;
+  const isSelected = (id: string) => selected.indexOf(id) !== -1;
 
-  // Avoid a layout jump when reaching the last page with empty rows.
-  const emptyRows =
-    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
+  const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
 
-    const visibleRows = React.useMemo(
-      () => stableSort(rows, getComparator(order, orderBy)).slice(
+  const visibleRows = React.useMemo(
+    () =>
+      stableSort(rows, getComparator(order, orderBy)).slice(
         page * rowsPerPage,
         page * rowsPerPage + rowsPerPage,
       ),
-      [rows, order, orderBy, page, rowsPerPage], // Include 'rows' in dependencies
-    );
-    
+    [rows, order, orderBy, page, rowsPerPage],
+  );
 
   return (
     <Box sx={{ width: '100%' }}>
@@ -447,23 +380,12 @@ export default function ListAllUsers() {
                           }}
                         />
                       </TableCell>
-                      <TableCell
-                        component="th"
-                        id={labelId}
-                        scope="row"
-                        padding="none"
-                      >
-                        {row.title}
+                      <TableCell component="th" id={labelId} scope="row" padding="none">
+                        {row.username}
                       </TableCell>
                       <TableCell align="right">{row.id}</TableCell>
-                      <TableCell align="right">{row.description}</TableCell>
-                      <TableCell align="right">{row.assigned_to}</TableCell>
-                      <TableCell align="right">{row.status}</TableCell>
-                      <TableCell align="right">{row.hours}</TableCell>
-                      <TableCell align="right">{row.start_date.toString()}</TableCell>
-                      <TableCell align="right">{row.end_date.toString()}</TableCell>
-
-
+                      <TableCell align="right">{row.email}</TableCell>
+                      <TableCell align="right">{row.password}</TableCell>
                     </TableRow>
                   );
                 })}
