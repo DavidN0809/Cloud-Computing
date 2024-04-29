@@ -119,12 +119,13 @@ curl -X POST "http://localhost:8000/tasks/create" \
      -d '{
          "title": "Project Planning",
          "description": "Initial planning phase for the project.",
-         "assigned_to": "<AssignedTo>",
+         "assigned_to": "<user id>",  
          "status": "planned",
          "hours": 8,
          "start_date": "2024-04-01T00:00:00Z",
          "end_date": "2024-04-03T00:00:00Z"
      }'
+
 
 ```
 
@@ -133,14 +134,14 @@ curl -X POST "http://localhost:8000/tasks/create" \
 curl -X POST "http://localhost:8000/tasks/create" \
      -H "Content-Type: application/json" \
      -d '{
-           "title": "Example Child Task",
-           "description": "This task is a child of another task.",
-           "assigned_to": "<AssignedTo>",
+           "title": "Child Task 1",
+           "description": "First child task of the project planning phase.",
+           "assigned_to": "<userid>",
            "status": "pending",
            "hours": 3,
-           "start_date": "2024-06-01T09:00:00Z",
-           "end_date": "2024-06-01T12:00:00Z",
-           "parent_task": "<Parent Task ID>"
+           "start_date": "2024-04-01T09:00:00Z",
+           "end_date": "2024-04-01T12:00:00Z",
+           "parent_task": "<parent_id>"
          }'
 
 ```
