@@ -39,10 +39,19 @@ function SearchComponent() {
   const handleSearch = async () => {
     setLoading(true);
     setError(null);
+    const cookies = document.cookie;
+    const cookieName = 'token=';
+    const cookieArray = cookies.split('; '); 
+    const tokenCookie = cookieArray.find(cookie => cookie.startsWith(cookieName));
+    const admin_token = tokenCookie ? tokenCookie.split('=')[1] : null;
     try {
       const url = `http://localhost:8000/users/get/${searchText}`;
 
-      const response = await fetch(url);
+      const response = await fetch(url,{
+        headers: {
+          'Authorization': `Bearer ${admin_token}`  
+        },
+      });
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }

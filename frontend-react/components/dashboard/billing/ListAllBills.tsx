@@ -266,9 +266,7 @@ export default function ListAllBills() {
 
   const cookies = document.cookie;
   const cookieName = 'token=';
-  const cookieArray = cookies.split('; '); // cookies are separated by '; '
-
-  // Find the cookie value for 'savedUserRole'
+  const cookieArray = cookies.split('; '); 
   const tokenCookie = cookieArray.find(cookie => cookie.startsWith(cookieName));
   const admin_token = tokenCookie ? tokenCookie.split('=')[1] : null;
 

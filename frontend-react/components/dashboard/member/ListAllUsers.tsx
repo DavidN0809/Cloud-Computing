@@ -234,13 +234,20 @@ export default function ListAllUsers() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
+  const cookies = document.cookie;
+  const cookieName = 'token=';
+  const cookieArray = cookies.split('; '); 
+  const tokenCookie = cookieArray.find(cookie => cookie.startsWith(cookieName));
+  const admin_token = tokenCookie ? tokenCookie.split('=')[1] : null;
+
+
   useEffect(() => {
     const fetchUsers = async () => {
       setLoading(true);
       try {
         const response = await fetch('http://localhost:8000/users/list', {
           headers: {
-            'Authorization': 'Bearer <admin_token>',
+            'Authorization': `Bearer ${admin_token}`  
           },
         });
         if (!response.ok) {

@@ -8,7 +8,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import TextField from '@mui/material/TextField';
 import DialogActions from '@mui/material/DialogActions';
 import Title from './Title';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation';
 import { AlertColor } from '@mui/material/Alert';
 
 type Severity = AlertColor;
