@@ -19,18 +19,33 @@ import Link from '@mui/material/Link';
 import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import NotificationsIcon from '@mui/icons-material/Notifications';
-import { mainListItems, secondaryListItems } from '@/components/Dashboard/listItems';
-import BillingAction from '@/components/Dashboard/billing/BillingAction'; // This will be your billing action component
-import ListAllBillings from '@/components/Dashboard/billing/ListAllBillings'; // This will be your component to list all billings
+import { mainListItems, secondaryListItems } from '@/components/Dashboard/overall/listItems';
+import BillAction from '@/components/Dashboard/billing/BillAction';
+import ListAllBills from '@/components/Dashboard/billing/ListAllBills'
+import SearchComponent from '@/components/Dashboard/billing/SearchComponent'
 
+import { useRouter  } from 'next/navigation';
+import LogoutIcon from '@mui/icons-material/Logout';
 
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams  } from 'next/navigation';
 
 import Snackbar from '@mui/material/Snackbar';
-import Alert from '@mui/material/Alert';
 import { AlertColor } from '@mui/material/Alert';
-
+import Alert from '@mui/material/Alert';
 type Severity = AlertColor;
+
+function Copyright(props: any) {
+  return (
+    <Typography variant="body2" color="text.secondary" align="center" {...props}>
+      {'Copyright © '}
+      <Link color="inherit" href="https://mui.com/">
+        Your Website
+      </Link>{' '}
+      {new Date().getFullYear()}
+      {'.'}
+    </Typography>
+  );
+}
 
 const drawerWidth: number = 240;
 
@@ -82,30 +97,58 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
   }),
 );
 
+// TODO remove, this demo shouldn't need to reset the theme.
 const defaultTheme = createTheme();
 
-export default function BillingManagement() {
+
+
+export default function Dashboard() {
+  
   const [open, setOpen] = React.useState(true);
   const [message, setMessage] = React.useState('');
   const [severity, setSeverity] = React.useState<Severity>('success');
-
   const toggleDrawer = () => {
     setOpen(!open);
   };
 
-  const searchParams = useSearchParams();
-  const stat = searchParams.get('stat');
+  const router = useRouter();
 
+  const handleLogout = () => {
+    // 清除所有 cookies
+    document.cookie.split(";").forEach((c) => {
+      document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date(0).toUTCString() + ";path=/");
+    });
+
+    // 跳转到首页
+    router.push('/');
+  };
+
+
+  const [isAdmin, setIsAdmin] = React.useState(false);
   React.useEffect(() => {
+    const cookie = document.cookie
+      .split('; ')
+      .find(row => row.startsWith('savedUserRole='));
+    if (cookie) {
+      const role = cookie.split('=')[1];
+      setIsAdmin(role === 'admin');
+    }
+  }, []);
+
+  const searchParams = useSearchParams()
+  const stat = searchParams.get('stat')
+  React.useEffect(() => {
+    const stat = searchParams.get('stat');
+    console.log("stat:",stat);
     if (stat === 'succeed') {
-      setMessage('Billing operation succeeded');
+      setMessage('succeed');
       setSeverity('success');
     } else if (stat === 'failed') {
-      setMessage('Billing operation failed');
+      setMessage('failed');
       setSeverity('error');
     }
-  }, [stat]);
 
+  }, [searchParams]);
   const handleClose = (event?: React.SyntheticEvent | Event, reason?: string) => {
     if (reason === 'clickaway') {
       return;
@@ -113,7 +156,6 @@ export default function BillingManagement() {
 
     setOpen(false);
   };
-
   return (
     <ThemeProvider theme={defaultTheme}>
       <Box sx={{ display: 'flex' }}>
@@ -150,6 +192,13 @@ export default function BillingManagement() {
                 <NotificationsIcon />
               </Badge>
             </IconButton>
+
+            <IconButton color="inherit" onClick={handleLogout}>
+              <Badge badgeContent={0} color="secondary">
+                <LogoutIcon />
+              </Badge>
+            </IconButton>
+
           </Toolbar>
         </AppBar>
         <Drawer variant="permanent" open={open}>
@@ -185,10 +234,10 @@ export default function BillingManagement() {
           }}
         >
           <Toolbar />
-          <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+          <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
             <Grid container spacing={3}>
-              {/* Billing actions */}
-              <Grid item xs={12} md={8} lg={9}>
+             {/* craete task */}
+             <Grid item xs={12} md={8} lg={12}>
                 <Paper
                   sx={{
                     p: 2,
@@ -196,11 +245,19 @@ export default function BillingManagement() {
                     flexDirection: 'column',
                   }}
                 >
-                  <BillingAction />
+                  <BillAction />
                 </Paper>
               </Grid>
-              {/* Billing list */}
-              <Grid item xs={12} md={4} lg={3}>
+
+              {/* list task */}
+              <Grid item xs={12} md={8} lg={12}>
+                  <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
+                    <ListAllBills />
+                  </Paper>
+              </Grid>
+             
+              {/* search task */}
+             <Grid item xs={12} md={8} lg={12}>
                 <Paper
                   sx={{
                     p: 2,
@@ -208,18 +265,24 @@ export default function BillingManagement() {
                     flexDirection: 'column',
                   }}
                 >
-                  <ListAllBillings />
+                  <SearchComponent />
                 </Paper>
               </Grid>
+
+
+
+
+
             </Grid>
+            <Copyright sx={{ pt: 4 }} />
+            <Snackbar open={open} autoHideDuration={6000} onClose={handleClose}>
+              <Alert onClose={handleClose} severity={severity} sx={{ width: '100%' }}>
+                {message}
+              </Alert>
+            </Snackbar>
           </Container>
         </Box>
       </Box>
-      <Snackbar open={stat !== null} autoHideDuration={6000} onClose={handleClose}>
-        <Alert onClose={handleClose} severity={severity} sx={{ width: '100%' }}>
-          {message}
-        </Alert>
-      </Snackbar>
     </ThemeProvider>
   );
 }

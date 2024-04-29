@@ -39,7 +39,7 @@ export const mainListItems = (
       <ListItemText primary="Members" />
     </ListItemButton>
 
-    <ListItemButton component="a" href="/dashboard/Billing">
+    <ListItemButton component="a" href="/dashboard/billing">
       <ListItemIcon>
         <ReceiptLongIcon />
       </ListItemIcon>
