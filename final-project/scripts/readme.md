@@ -33,7 +33,7 @@ To run the tests, follow these steps:
     ```
 4. Run the `test-all.sh` script to execute all the test scripts in sequence:
     ```bash
-    ./testl-all.sh
+    ./test-all.sh
     ```
     This script will clear the database, run the user tests, task tests, billing tests, and task relationship tests, and provide a summary of the test results.
 5. Alternatively, you can run each test script individually:
