@@ -19,6 +19,7 @@ export default function TaskAction() {
   const [open, setOpen] = useState(false);
   const [openCreate, setOpenCreate] = useState(false);
   const [openUpdate, setOpenUpdate] = useState(false);
+  const [openDelete, setOpenDelete] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [assignedTo, setAssignedTo] = useState('');
@@ -39,6 +40,7 @@ export default function TaskAction() {
     setOpen(false);
     setOpenCreate(false);
     setOpenUpdate(false);
+    setOpenDelete(false);
   };
 
   const handleClickOpenCreate = () => {
@@ -47,6 +49,10 @@ export default function TaskAction() {
 
   const handleClickOpenUpdate = () => {
     setOpenUpdate(true);
+  };
+
+  const handleClickOpenDelete = () => {
+    setOpenDelete(true);
   };
   
 
@@ -93,12 +99,12 @@ export default function TaskAction() {
       }
   
       console.log('Task created', data);
-      router.push('/dashboard/tasks?stat=succeed');
+      window.location.href = '/dashboard/tasks?stat=succeed';
       
       
     } catch (error) {
       console.error('There was a problem with the fetch operation:', error);
-      router.push('/dashboard/tasks?stat=failed');
+      window.location.href = '/dashboard/tasks?stat=failed';
     } finally {
     handleClose(); // This will close the dialog in any case after operation
   }
@@ -148,12 +154,55 @@ export default function TaskAction() {
       }
   
       console.log('Task updated');
-      router.push('/dashboard/tasks?stat=succeed');
+      window.location.href = '/dashboard/tasks?stat=succeed';
       
       
     } catch (error) {
       console.error('There was a problem with the fetch operation:', error);
-      router.push('/dashboard/tasks?stat=failed');
+      window.location.href = '/dashboard/tasks?stat=failed';
+    } finally {
+    handleClose(); // This will close the dialog in any case after operation
+  }
+  };
+
+
+  const handleDelete = async (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+
+    
+
+    try {
+      const cookies = document.cookie;
+      const cookieName = 'token=';
+      const cookieArray = cookies.split('; '); // cookies are separated by '; '
+
+      // Find the cookie value for 'savedUserRole'
+      const tokenCookie = cookieArray.find(cookie => cookie.startsWith(cookieName));
+      const admin_token = tokenCookie ? tokenCookie.split('=')[1] : null;
+
+      const response = await fetch(`http://localhost:8000/tasks/remove/${task_id}`, {
+        method: 'DELETE', 
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${admin_token}`  
+        },
+      });
+      console.log(`http://localhost:8000/tasks/remove/${task_id}`);
+      console.log("response.ok:",response.ok);
+      console.log("response.text:",response.text);
+      console.log("response:",response);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+  
+      console.log('Task removed');
+      window.location.href = '/dashboard/tasks?stat=succeed';
+      
+      
+    } catch (error) {
+      console.error('There was a problem with the fetch operation:', error);
+      window.location.href = '/dashboard/tasks?stat=failed';
+      
     } finally {
     handleClose(); // This will close the dialog in any case after operation
   }
@@ -163,8 +212,8 @@ export default function TaskAction() {
     <React.Fragment>
       <Title>Today</Title>
       <Container maxWidth="lg">
-        <Grid container spacing={2} alignItems="center" justifyContent="space-around">
-          <Grid item md={6} display="flex" justifyContent="center">
+        <Grid container spacing={3} alignItems="center" justifyContent="space-around">
+          <Grid item md={4} display="flex" justifyContent="center">
             <Button variant="outlined" color="primary" onClick={handleClickOpenCreate}>
               Create Task
             </Button>
@@ -190,7 +239,7 @@ export default function TaskAction() {
             </Dialog>
           </Grid>
 
-          <Grid item md={6} display="flex" justifyContent="center">
+          <Grid item md={4} display="flex" justifyContent="center">
             <Button variant="outlined" color="primary" onClick={handleClickOpenUpdate}>
               Update Task
             </Button>
@@ -216,6 +265,33 @@ export default function TaskAction() {
               </DialogActions>
             </Dialog>
           </Grid>
+
+
+          <Grid item md={4} display="flex" justifyContent="center">
+            <Button variant="outlined" color="primary" onClick={handleClickOpenDelete}>
+              Delete Task
+            </Button>
+            <Dialog open={openDelete} onClose={handleClose}>
+              <DialogTitle>Delete Task</DialogTitle>
+              <DialogContent>
+                <TextField autoFocus margin="dense" id="task_id" label="Task ID" type="text" fullWidth variant="standard" value={task_id} onChange={(e) => setTaskId(e.target.value)} />
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={handleClose} color="secondary">
+                  Cancel
+                </Button>
+                <Button onClick={handleDelete} color="primary">
+                  Delete
+                </Button>
+              </DialogActions>
+            </Dialog>
+          </Grid>
+
+
+
+
+
+
         </Grid>
       </Container>
     </React.Fragment>

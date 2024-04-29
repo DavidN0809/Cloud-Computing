@@ -55,11 +55,6 @@ function createData(
   };
 }
 
-const exStartdate = new Date("2024-04-01T00:00:00Z");
-const exEnddate = new Date("2024-04-03T00:00:00Z");
-const simuJson = '[{"id":"662dcf5c418cb57c6592dfe8","title":"Project Planning","description":"Initial planning phase for the project.","assigned_to":"662dafbe069a04291d6c49e4","status":"planned","hours":8,"start_date":"2024-04-01T00:00:00Z","end_date":"2024-04-03T00:00:00Z","invoice_id":"000000000000000000000000"},{"id":"662e89aec069bcc6231e8cee","title":"2","description":"2 Warning: This task overlaps with existing task(s).","assigned_to":"662dafbe069a04291d6c49e4","status":"planned","hours":8,"start_date":"2024-04-01T00:00:00Z","end_date":"2024-04-03T00:00:00Z","invoice_id":"000000000000000000000000"},{"id":"662e89bfc069bcc6231e8cef","title":"3","description":"3 Warning: This task overlaps with existing task(s).","assigned_to":"662dafbe069a04291d6c49e4","status":"planned","hours":8,"start_date":"2024-04-01T00:00:00Z","end_date":"2024-04-03T00:00:00Z","invoice_id":"000000000000000000000000"}]';
-
-
 
 // const rows = [
 //   createData(200,"Project Planning",
