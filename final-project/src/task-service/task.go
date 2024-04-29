@@ -274,19 +274,61 @@ func updateTask(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// Handle InvoiceID creation if task status changes to 'done'
-if currentTask.Status != "done" && updates["status"] == "done" {
-    invoiceID, err := createInvoiceInBillingService(currentTask)
-    if err != nil {
-        log.Printf("Failed to create invoice: %v", err)
-        http.Error(w, "Failed to create invoice", http.StatusInternalServerError)
-        return
+
+    // Handle InvoiceID creation if task status changes to 'done'
+    // Handle InvoiceID creation if task status changes to 'done'
+    if currentTask.Status != "done" && updates["status"] == "done" {
+        var childTasks []Task
+        if currentTask.ParentTask == nil {
+            // If the current task is a parent task, set all child tasks to 'done' and generate invoices for each
+            cursor, err := collection.Find(context.TODO(), bson.M{"parent_task": currentTask.ID})
+            if err == nil {
+                defer cursor.Close(context.Background())
+                cursor.All(context.Background(), &childTasks)
+
+                for _, childTask := range childTasks {
+                    if childTask.Status != "done" {
+                        childInvoiceID, err := createInvoiceInBillingService(childTask)
+                        if err != nil {
+                            log.Printf("Failed to create invoice for child task: %v", err)
+                            continue
+                        }
+
+                        _, err = collection.UpdateOne(context.TODO(), bson.M{"_id": childTask.ID}, bson.M{"$set": bson.M{"status": "done", "invoice_id": childInvoiceID}})
+                        if err != nil {
+                            log.Printf("Failed to update child task with invoice ID: %v", err)
+                        } else {
+                            log.Printf("Child task updated with InvoiceID: %v", childInvoiceID)
+                        }
+                    }
+                }
+            }
+        } else {
+            // If the current task is a child task, generate an invoice for it
+            invoiceID, err := createInvoiceInBillingService(currentTask)
+            if err != nil {
+                log.Printf("Failed to create invoice: %v", err)
+                http.Error(w, "Failed to create invoice", http.StatusInternalServerError)
+                return
+            }
+
+            updateDoc["$set"].(bson.M)["invoice_id"] = invoiceID
+            log.Printf("Child task updated to 'done'. New InvoiceID: %v generated", invoiceID)
+        }
+
+        // If the current task is not a parent or child task, generate an invoice for it
+        if currentTask.ParentTask == nil && len(childTasks) == 0 {
+            invoiceID, err := createInvoiceInBillingService(currentTask)
+            if err != nil {
+                log.Printf("Failed to create invoice: %v", err)
+                http.Error(w, "Failed to create invoice", http.StatusInternalServerError)
+                return
+            }
+
+            updateDoc["$set"].(bson.M)["invoice_id"] = invoiceID
+            log.Printf("Task updated to 'done'. New InvoiceID: %v generated", invoiceID)
+        }
     }
-
-    updateDoc["$set"].(bson.M)["invoice_id"] = invoiceID
-    log.Printf("Task updated to 'done'. New InvoiceID: %v generated", invoiceID)
-}
-
 	_, err = collection.UpdateOne(context.TODO(), bson.M{"_id": objectID}, updateDoc)
 	if err != nil {
 		http.Error(w, "Failed to update task", http.StatusInternalServerError)
