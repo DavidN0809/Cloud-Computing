@@ -116,9 +116,8 @@ type User struct {
         Role     string             `bson:"role" json:"role"`
 }
 
-
 func createUser(w http.ResponseWriter, req *http.Request) {
-    log.Println("Starting to create user")  // Log the start of the operation
+    log.Println("Starting to create user")
 
     var user User
     err := json.NewDecoder(req.Body).Decode(&user)
@@ -133,9 +132,30 @@ func createUser(w http.ResponseWriter, req *http.Request) {
         user.Role = "regular"
     }
 
-    log.Printf("Attempting to insert user: %+v", user)  // Log the user details being inserted
+    log.Printf("Attempting to insert user: %+v", user)
 
     collection := client.Database("user").Collection("users")
+
+    // Check if a user with the same username already exists
+    usernameFilter := bson.M{"username": user.Username}
+    existingUserByUsername := &User{}
+    err = collection.FindOne(context.TODO(), usernameFilter).Decode(existingUserByUsername)
+    if err == nil {
+        log.Printf("User with the same username already exists: %+v", existingUserByUsername)
+        http.Error(w, "User with the same username already exists", http.StatusConflict)
+        return
+    }
+
+    // Check if a user with the same email already exists
+    emailFilter := bson.M{"email": user.Email}
+    existingUserByEmail := &User{}
+    err = collection.FindOne(context.TODO(), emailFilter).Decode(existingUserByEmail)
+    if err == nil {
+        log.Printf("User with the same email already exists: %+v", existingUserByEmail)
+        http.Error(w, "User with the same email already exists", http.StatusConflict)
+        return
+    }
+
     user.ID = primitive.NewObjectID()
     _, err = collection.InsertOne(context.TODO(), user)
     if err != nil {
@@ -146,9 +166,10 @@ func createUser(w http.ResponseWriter, req *http.Request) {
 
     log.Printf("User created successfully: %+v", user)
     w.Header().Set("Content-Type", "application/json")
-    w.WriteHeader(http.StatusCreated) // Set status to 201 Created
+    w.WriteHeader(http.StatusCreated)
     json.NewEncoder(w).Encode(user)
 }
+
 
 func loginUser(w http.ResponseWriter, req *http.Request) {
     log.Println("Received request to login user")
