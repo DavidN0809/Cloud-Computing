@@ -46,6 +46,30 @@ echo "Admin User Token: $ADMIN_USER_TOKEN"
 echo "Admin User ID: $ADMIN_USER_ID"
 echo
 
+# Task CRUD Tests
+
+# Create a task (regular user)
+echo "Creating a task (regular user)..."
+CREATE_TASK_RESPONSE=$(curl -s -X POST "$BASE_URL/tasks/create" \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $REGULAR_USER_TOKEN" \
+  -d '{
+        "title": "Sample Task",
+        "description": "This is a sample task.",
+        "assigned_to": "'$REGULAR_USER_ID'",
+        "status": "in_progress",
+        "hours": 5,
+        "start_date": "2024-06-01T00:00:00Z",
+        "end_date": "2024-06-03T00:00:00Z"
+      }')
+echo $CREATE_TASK_RESPONSE
+print_test_result "Create Task (Regular User)" $?
+
+TASK_ID=$(echo $CREATE_TASK_RESPONSE | grep -o '"id":"[^"]*' | cut -d'"' -f4)
+echo "Task ID: $TASK_ID"
+echo
+
+
 # Billing CRUD Tests
 
 # Create a billing (admin only)
@@ -55,7 +79,7 @@ CREATE_BILLING_RESPONSE=$(curl -s -X POST "$BASE_URL/billings/create" \
   -H "Authorization: Bearer $ADMIN_USER_TOKEN" \
   -d '{
         "user_id": "'$ADMIN_USER_ID'",
-        "task_id": "task_id_placeholder",
+        "task_id": "'$TASK_ID'",
         "hours": 5,
         "hourly_rate": 100,
         "amount": 500
