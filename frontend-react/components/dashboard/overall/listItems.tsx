@@ -31,7 +31,7 @@ export const mainListItems = (
         <ListItemText primary="Tasks" />
       </ListItemButton>
 
-    <ListItemButton>
+    <ListItemButton component="a" href="/dashboard/member">
       <ListItemIcon>
         <PeopleIcon />
       </ListItemIcon>
