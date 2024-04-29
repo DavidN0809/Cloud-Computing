@@ -23,6 +23,7 @@ import { mainListItems, secondaryListItems } from '@/components/Dashboard/overal
 import Chart from '@/components/Dashboard/overall/Chart';
 import Deposits from '@/components/Dashboard/overall/Deposits';
 import Orders from '@/components/Dashboard/overall/Orders';
+import { useRouter  } from 'next/navigation';
 
 function Copyright(props: any) {
   return (
@@ -105,6 +106,18 @@ export default function Dashboard() {
 
   console.log(role);
 
+  const router = useRouter();
+
+  const handleLogout = () => {
+    // 清除所有 cookies
+    document.cookie.split(";").forEach((c) => {
+      document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date(0).toUTCString() + ";path=/");
+    });
+
+    // 跳转到首页
+    router.push('/');
+  };
+
   return (
     <ThemeProvider theme={defaultTheme}>
       <Box sx={{ display: 'flex' }}>
@@ -141,6 +154,16 @@ export default function Dashboard() {
                 <NotificationsIcon />
               </Badge>
             </IconButton>
+
+
+            <IconButton color="inherit" onClick={handleLogout}>
+              <Badge badgeContent={0} color="secondary">
+                <NotificationsIcon />
+              </Badge>
+            </IconButton>
+
+
+
           </Toolbar>
         </AppBar>
         <Drawer variant="permanent" open={open}>
