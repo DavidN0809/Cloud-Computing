@@ -218,7 +218,8 @@ curl -X POST http://localhost:8000/billings/create \
         "user_id": "<user_id>",
         "task_id": "<task_id>",
         "hours": 5,
-        "amount": 100
+        "hourly_rate": 120,
+        "amount": 100         
       }'
 ```
 
@@ -239,6 +240,7 @@ curl -X PUT http://localhost:8000/billings/update/<billing_id> \
         "user_id": "<user_id>",
         "task_id": "<task_id>",
         "hours": 8,
+        "hourly_rate": 120,
         "amount": 150
       }'
 ```
@@ -255,6 +257,12 @@ This operation should only succeed with admin privileges.
 ```bash
 curl -X GET http://localhost:8000/billings/list \
       -H 'Authorization: Bearer <admin_token>' 
+```
+
+### List By User ID (admin only)
+```bash
+curl -X GET "http://localhost:8000/billings/list?user_id=<user_id>" \
+     -H 'Authorization: Bearer <admin_token>'
 ```
 
 ### Delete All Billings (testing only)
