@@ -131,6 +131,12 @@ const headCells: readonly HeadCell[] = [
     label: 'title',
   },
   {
+    id: 'id',
+    numeric: false,
+    disablePadding: true,
+    label: 'task id',
+  },
+  {
     id: 'description',
     numeric: false,
     disablePadding: false,
@@ -259,7 +265,7 @@ function EnhancedTableToolbar(props: EnhancedTableToolbarProps) {
           id="tableTitle"
           component="div"
         >
-          Tasks
+          All Tasks
         </Typography>
       )}
       {numSelected > 0 ? (
@@ -449,6 +455,7 @@ export default function ListAllTasks() {
                       >
                         {row.title}
                       </TableCell>
+                      <TableCell align="right">{row.id}</TableCell>
                       <TableCell align="right">{row.description}</TableCell>
                       <TableCell align="right">{row.assigned_to}</TableCell>
                       <TableCell align="right">{row.status}</TableCell>
